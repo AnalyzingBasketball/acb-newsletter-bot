@@ -1,0 +1,51 @@
+name: Generar Newsletter ACB
+
+on:
+  schedule:
+    - cron: '0 7 * * 1' # Lunes a las 08:00
+  workflow_dispatch: # Botón manual
+
+permissions:
+  contents: write
+
+jobs:
+  generar-contenido:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Descargar código
+      uses: actions/checkout@v4
+
+    - name: 🐍 Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: 📦 Instalar librerías
+      run: pip install -r requirements.txt
+
+    - name: 📊 1. Ejecutar Scraper (Datos)
+      run: python boxscore_ACB_headless.py
+
+    - name: 🧠 2. Ejecutar Redactor IA (Gemini)
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python ai_writer.py
+
+    # --- ¡¡ESTE ES EL PASO QUE TE FALTABA!! ---
+    - name: 🚀 3. Enviar Email y Redes
+      env:
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        URL_SUSCRIPTORES: ${{ secrets.URL_SUSCRIPTORES }}
+        MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
+      run: python email_sender.py
+    # -------------------------------------------
+
+    - name: 💾 Guardar datos históricos
+      run: |
+        git config --global user.name 'ACB Bot'
+        git config --global user.email 'bot@noreply.github.com'
+        git add data/ || true
+        git commit -m "Auto: Nuevos datos procesados" || echo "Sin cambios"
+        git push

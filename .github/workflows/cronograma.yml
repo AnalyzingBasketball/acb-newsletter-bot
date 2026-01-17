@@ -1,0 +1,38 @@
+name: Actualizar Datos ACB
+
+on:
+  schedule:
+    # Se ejecuta a las 08:00 hora peninsular (07:00 UTC) los lunes
+    - cron: '0 7 * * 1'
+  workflow_dispatch: # Esto te permite darle a un botón "Play" manual para probar
+
+permissions:
+  contents: write # Permiso para que el robot pueda guardar el CSV
+
+jobs:
+  ejecutar-scraper:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Descargar tu código
+      uses: actions/checkout@v4
+
+    - name: Instalar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Instalar librerías
+      run: pip install -r requirements.txt
+
+    - name: Ejecutar el script
+      # Aquí ejecutamos tu archivo exacto
+      run: python boxscore_ACB_headless.py
+
+    - name: Guardar el CSV generado
+      run: |
+        git config --global user.name 'ACB Bot'
+        git config --global user.email 'bot@noreply.github.com'
+        git add data/*.csv
+        git commit -m "Nuevos datos ACB" || echo "No hay cambios nuevos"
+        git push

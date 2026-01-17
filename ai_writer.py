@@ -21,132 +21,79 @@ except Exception as e:
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 if not os.path.exists(FILE_PATH): guardar_salida("❌ No hay CSV de datos.")
 
-# --- CARGA Y LIMPIEZA ---
+# --- CARGA DATOS ---
 df = pd.read_csv(FILE_PATH)
 if 'Week' not in df.columns: guardar_salida("❌ CSV sin columna Week.")
 
 ultima_jornada_label = df['Week'].unique()[-1]
 df_week = df[df['Week'] == ultima_jornada_label]
-print(f"🤖 Procesando {ultima_jornada_label} | Perfil: Data Scientist...")
+print(f"🤖 Procesando {ultima_jornada_label}...")
 
-# --- 1. MVP (Criterio: Victoria + Valoración + Eficiencia) ---
+# --- 1. MVP ---
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
 mvp = pool.sort_values('VAL', ascending=False).iloc[0]
+txt_mvp = f"{mvp['Name']} ({mvp['Team']}): {mvp['VAL']} VAL, {mvp['PTS']} pts, {mvp['Reb_T']} reb."
 
-# Preparamos un bloque de texto técnico para el MVP
-txt_mvp = (
-    f"JUGADOR: {mvp['Name']} ({mvp['Team']})\n"
-    f"VALORACIÓN: {mvp['VAL']} | PUNTOS: {mvp['PTS']} | REBOTES: {mvp['Reb_T']} | ASISTENCIAS: {mvp['AST']}\n"
-    f"MÉTRICAS AVANZADAS: {mvp['TS%']}% True Shooting (TS%), {mvp['eFG%']}% Effective Field Goal (eFG%), "
-    f"{mvp['USG%']}% Usage Rate (USG%), {mvp['GmSc']} Game Score.\n"
-    f"IMPACTO: +/- en pista de {mvp['+/-']}."
-)
-
-# --- 2. DESTACADOS (TOP 3 PERO CON DATOS AVANZADOS) ---
+# --- 2. DESTACADOS ---
 resto = df_week[df_week['PlayerID'] != mvp['PlayerID']]
 top_rest = resto.sort_values('VAL', ascending=False).head(3)
 txt_rest = ""
 for _, row in top_rest.iterrows():
-    txt_rest += (
-        f"- {row['Name']} ({row['Team']}): {row['PTS']} pts, {row['VAL']} VAL. "
-        f"Eficiencia: {row['TS%']}% TS con un uso del {row['USG%']}%.\n"
-    )
+    txt_rest += f"- {row['Name']} ({row['Team']}): {row['VAL']} VAL.\n"
 
-# --- 3. ANÁLISIS DE EQUIPOS (FOUR FACTORS SIMPLIFICADOS) ---
-# Agrupamos
-team_stats = df_week.groupby('Team').agg({
-    'PTS': 'sum', 'Game_Poss': 'mean', 
-    'T3_M': 'sum', 'T3_A': 'sum',
-    'Reb_O': 'sum', 'Reb_D': 'sum',
-    'TO': 'sum'
-}).reset_index()
-
-# Cálculos avanzados de equipo
+# --- 3. EQUIPOS ---
+team_stats = df_week.groupby('Team').agg({'PTS': 'sum', 'Game_Poss': 'mean'}).reset_index()
 team_stats['ORTG'] = (team_stats['PTS'] / team_stats['Game_Poss']) * 100
-team_stats['eFG'] = (team_stats['PTS'] - team_stats['TO']) # Simplificación para contexto, usamos mejor T3%
-team_stats['T3_PCT'] = (team_stats['T3_M'] / team_stats['T3_A']) * 100
-
 best_offense = team_stats.sort_values('ORTG', ascending=False).iloc[0]
-highest_pace = team_stats.sort_values('Game_Poss', ascending=False).iloc[0]
-best_shooter = team_stats.sort_values('T3_PCT', ascending=False).iloc[0]
+txt_teams = f"Mejor Ataque: {best_offense['Team']} ({best_offense['ORTG']:.1f} pts/100 poss)."
 
-txt_teams = (
-    f"- Eficiencia Ofensiva (ORTG): {best_offense['Team']} lideró con {best_offense['ORTG']:.1f} puntos/100 posesiones.\n"
-    f"- Ritmo (Pace): {highest_pace['Team']} jugó a {highest_pace['Game_Poss']:.1f} posesiones.\n"
-    f"- Acierto Exterior: {best_shooter['Team']} firmó un {best_shooter['T3_PCT']:.1f}% en triples ({best_shooter['T3_M']}/{best_shooter['T3_A']})."
-)
-
-# --- 4. TENDENCIAS (LAST 3 GAMES) ---
-# Solo si hay histórico suficiente
+# --- 4. TENDENCIAS (PARA BULLETPOINTS) ---
+# Calculamos medias de las últimas 3 jornadas si existen
 jornadas = df['Week'].unique()
-txt_trends = "Datos insuficientes para análisis de tendencias (Week 1)."
+txt_trends = "Datos insuficientes para tendencias."
 if len(jornadas) >= 3:
     last_3 = jornadas[-3:]
-    df_last_3 = df[df['Week'].isin(last_3)]
-    # Calculamos medias
-    means = df_last_3.groupby(['Name', 'Team'])[['VAL', 'TS%', 'USG%']].mean().reset_index()
-    # Filtro: Jugadores con >15 VAL media
-    hot = means[means['VAL'] > 18].sort_values('VAL', ascending=False).head(3)
-    
+    df_last = df[df['Week'].isin(last_3)]
+    means = df_last.groupby(['Name', 'Team'])['VAL'].mean().reset_index()
+    hot = means.sort_values('VAL', ascending=False).head(4)
     txt_trends = ""
     for _, row in hot.iterrows():
-        txt_trends += (
-            f"- {row['Name']} ({row['Team']}): Promedio {row['VAL']:.1f} VAL | {row['TS%']:.1f}% TS | {row['USG%']:.1f}% USG (Últimos 3 partidos).\n"
-        )
+        txt_trends += f"- {row['Name']} ({row['Team']}): {row['VAL']:.1f} VAL media.\n"
 
-# --- 5. EL PROMPT TÉCNICO ---
+# --- 5. PROMPT ESTRICTO ---
 prompt = f"""
-Actúa como Lead Data Scientist para la consultora "Analyzing Basketball".
-Escribe un informe técnico semanal sobre la {ultima_jornada_label} de la Liga Endesa.
+Actúa como Data Scientist de "Analyzing Basketball". Escribe un informe técnico de la {ultima_jornada_label}.
 
-OBJETIVO:
-Proveer un análisis sobrio, basado puramente en métricas avanzadas, eliminando cualquier subjetividad periodística.
+DATOS:
+MVP: {txt_mvp}
+TOP: {txt_rest}
+EQUIPO: {txt_teams}
+TENDENCIAS: {txt_trends}
 
-REGLAS DE ESTILO (ESTRICTAS):
-- TONO: Serio, profesional, clínico. Cero entusiasmo.
-- FORMATO: Sin emojis. Uso de negritas solo para nombres o métricas clave.
-- NOMBRES: Usa EXACTAMENTE los nombres proporcionados en los datos. No los modifiques (Ej: Si dice Ante Tomic, no escribas Andrej).
-- FIRMA: Analyzing Basketball.
-
-DATOS INPUT:
-
-1. MVP DE LA JORNADA (Datos):
-{txt_mvp}
-
-2. RENDIMIENTO INDIVIDUAL (Top Performers):
-{txt_rest}
-
-3. MÉTRICAS DE EQUIPO (Advanced Stats):
-{txt_teams}
-
-4. TENDENCIAS Y FORMA (Last 3 Games):
-{txt_trends}
-
-ESTRUCTURA DEL INFORME:
+ESTRUCTURA OBLIGATORIA:
 **INFORME TÉCNICO: {ultima_jornada_label}**
 
-**1. Análisis de Impacto Individual (MVP)**
-Desglosa el rendimiento del MVP centrándote en la eficiencia (TS%, eFG%) y el volumen de uso (USG%). Explica por qué su valoración es relevante en el contexto de la victoria. Se analítico.
+**1. Análisis de Impacto Individual**
+[Analiza al MVP en 3 líneas]
 
-**2. Cuadro de Honor Estadístico**
-Resumen breve de los otros destacados, citando sus métricas de eficiencia.
+**2. Cuadro de Honor**
+[Menciona a los destacados brevemente]
 
-**3. Desempeño Colectivo (ORTG & Pace)**
-Análisis de los equipos destacados en eficiencia ofensiva y ritmo de juego.
+**3. Desempeño Colectivo**
+[Menciona el mejor ataque]
 
-**4. Tendencias para la próxima jornada**
-Menciona a los jugadores con mejor promedio en las últimas 3 jornadas como activos a vigilar.
+**4. Proyección Estadística**
+A continuación, los jugadores a vigilar la próxima semana:
+[IMPORTANTE: Usa una LISTA CON GUIONES (-). NO escribas párrafos aquí. Solo lista.]
 
 ---
-Analyzing Basketball
+Firma: AB
 """
 
 # --- 6. GENERACIÓN ---
-nombre_modelo = 'gemini-2.5-flash'
 try:
-    print(f"⚡ Generando informe técnico con {nombre_modelo}...")
-    model = genai.GenerativeModel(nombre_modelo)
+    model = genai.GenerativeModel('gemini-2.5-flash')
     response = model.generate_content(prompt)
     guardar_salida(response.text)
 except Exception as e:

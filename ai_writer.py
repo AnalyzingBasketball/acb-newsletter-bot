@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import google.generativeai as genai
 import sys
+import re
 
 # --- CONFIGURACIÓN ---
 def guardar_salida(mensaje, nombre_archivo="newsletter_borrador.md"):
@@ -67,7 +68,6 @@ if len(jornadas) >= 1:
         txt_trends += f"- {row['Name']} ({row['Team']}): {row['VAL']:.1f} VAL, {row['PTS']:.1f} PTS, {row['Reb_T']:.1f} REB, {row['AST']:.1f} AST.\n\n"
 
 # --- MAPA DE EQUIPOS PARA EL PROMPT ---
-# Se lo pasamos a Gemini para que sepa cómo escribir los nombres
 mapa_equipos = """
 UNI -> Unicaja
 RMB -> Real Madrid
@@ -142,7 +142,8 @@ AB
 
 # --- 6. GENERACIÓN Y LIMPIEZA A MARTILLAZOS ---
 try:
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    # CAMBIO IMPORTANTE: Usamos 'gemini-1.5-flash' que tiene más cuota gratis
+    model = genai.GenerativeModel('gemini-1.5-flash')
     response = model.generate_content(prompt)
     
     texto_final = response.text
@@ -158,7 +159,6 @@ try:
     texto_final = texto_final.replace("**4. Proyección Estadística (Tendencias)**", "\n\n**4. Proyección Estadística (Tendencias)**\n\n")
 
     # 3. SEGURIDAD FINAL EQUIPOS (Por si Gemini falla):
-    # Si queda algún "MBA" suelto (sin paréntesis), lo cambiamos a mano
     texto_final = texto_final.replace(" MBA ", " MoraBanc Andorra ").replace(" UNI ", " Unicaja ")
     
     guardar_salida(texto_final)

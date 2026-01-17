@@ -1,24 +1,21 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from email.mime.image import MIMEImage
 import os
 import markdown
 import sys
 import pandas as pd
 import requests
-from datetime import datetime
-from PIL import Image, ImageDraw, ImageFont
 
-# --- 1. TUS ENLACES (¡RELLÉNALOS!) ---
-# Pega aquí el enlace de tu logo (el de GitHub que acaba en .jpg o .png)
+# --- 1. TUS ENLACES ---
+# Enlace de tu logo en GitHub
 URL_LOGO = "https://github.com/AnalyzingBasketball/acb-newsletter-bot/blob/main/logo.png?raw=true" 
 
-# Pega aquí el enlace de tu página de Wix que acabas de encontrar
+# Enlace de tu página de suscripción en Wix
 URL_SUSCRIPCION = "https://analyzingbasketball.wixsite.com/home/newsletter"
 URL_HOME = "https://analyzingbasketball.wixsite.com/home"
 
-# --- 2. CONFIGURACIÓN SEGURA ---
+# --- 2. CONFIGURACIÓN ---
 gmail_user = os.environ.get("GMAIL_USER")
 gmail_password = os.environ.get("GMAIL_PASSWORD")
 url_suscriptores = os.environ.get("URL_SUSCRIPTORES")
@@ -34,58 +31,20 @@ if not os.path.exists("newsletter_borrador.md"):
 with open("newsletter_borrador.md", "r", encoding="utf-8") as f:
     md_content = f.read()
 
-# Preparamos los textos
+# Preparamos el título y texto para LinkedIn
 titulo_redes = md_content.split('\n')[0].replace('#', '').strip()
-
-# Texto específico para LinkedIn (con enlace clicable)
 texto_linkedin = f"🏀 {titulo_redes}\n\n📊 Nuevo análisis de datos disponible.\nLee el informe completo y suscríbete aquí: {URL_SUSCRIPCION}\n\n#ACB #DataScouting #AnalyzingBasketball"
-
-# Texto para Instagram (más corto, link en bio)
-texto_instagram = f"🏀 {titulo_redes}\n📊 Nuevo análisis disponible. Link en bio.\n#ACB #AnalyzingBasketball"
 
 # --- 4. AUTOMATIZACIÓN LINKEDIN (VÍA MAKE) ---
 if webhook_make:
     print("📡 Enviando datos a Make para LinkedIn...")
     try:
-        # Enviamos el texto con el enlace bueno a Make
         requests.post(webhook_make, json={"texto": texto_linkedin})
         print("✅ Publicado en LinkedIn automáticamente.")
     except Exception as e:
         print(f"⚠️ Error conectando con Make: {e}")
 
-# --- 5. GENERAR IMAGEN PARA INSTAGRAM ---
-print("🎨 Generando imagen para Instagram...")
-nombre_imagen = "post_ig.jpg"
-img = Image.new('RGB', (1080, 1080), color=(15, 15, 15)) # Fondo casi negro
-draw = ImageDraw.Draw(img)
-
-try:
-    font = ImageFont.load_default()
-except:
-    font = ImageFont.load_default()
-
-# Dibujamos el texto en la imagen
-draw.text((100, 450), "ANALYZING\nBASKETBALL", fill=(0, 120, 255), font=font)
-draw.text((100, 600), "NUEVO INFORME\nDISPONIBLE", fill=(255, 255, 255), font=font)
-draw.text((100, 750), datetime.now().strftime("%d/%m/%Y"), fill=(150, 150, 150), font=font)
-
-img.save(nombre_imagen)
-
-# --- 6. ENVIAR PACK INSTAGRAM AL ADMIN (A TI) ---
-msg_admin = MIMEMultipart()
-msg_admin['From'] = gmail_user
-msg_admin['To'] = gmail_user
-msg_admin['Subject'] = "📸 Pack Instagram (LinkedIn ya publicado)"
-msg_admin.attach(MIMEText(f"LinkedIn se ha publicado solo.\n\nAquí tienes la foto para Instagram:\n\n{texto_instagram}", 'plain'))
-
-with open(nombre_imagen, 'rb') as f:
-    msg_admin.attach(MIMEImage(f.read(), name="instagram_post.jpg"))
-
-server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-server.login(gmail_user, gmail_password)
-server.sendmail(gmail_user, gmail_user, msg_admin.as_string())
-
-# --- 7. ENVIAR NEWSLETTER A SUSCRIPTORES ---
+# --- 5. ENVIAR NEWSLETTER A SUSCRIPTORES ---
 print("📥 Preparando Newsletter...")
 html_content = markdown.markdown(md_content)
 
@@ -128,22 +87,31 @@ if url_suscriptores:
     except Exception as e:
         print(f"⚠️ Nota: No se pudo leer la lista de suscriptores ({e}). Se enviará solo al admin.")
 
-# Aseguramos que tú siempre recibes una copia
+# Aseguramos que tú siempre recibes una copia (así ves cómo ha quedado)
 if gmail_user not in lista_emails:
     lista_emails.append(gmail_user)
 
 print(f"📧 Enviando newsletter a {len(lista_emails)} personas...")
 
-for email in lista_emails:
-    try:
-        msg = MIMEMultipart()
-        msg['From'] = f"Analyzing Basketball <{gmail_user}>"
-        msg['To'] = email.strip()
-        msg['Subject'] = f"🏀 Informe: {titulo_redes}"
-        msg.attach(MIMEText(plantilla, 'html'))
-        server.sendmail(gmail_user, email.strip(), msg.as_string())
-    except:
-        continue # Si un email falla, seguimos con el siguiente
+# Iniciamos conexión con Gmail una sola vez
+try:
+    server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+    server.login(gmail_user, gmail_password)
 
-server.quit()
-print("✅ TODO COMPLETADO CON ÉXITO.")
+    for email in lista_emails:
+        try:
+            msg = MIMEMultipart()
+            msg['From'] = f"Analyzing Basketball <{gmail_user}>"
+            msg['To'] = email.strip()
+            msg['Subject'] = f"🏀 Informe: {titulo_redes}"
+            msg.attach(MIMEText(plantilla, 'html'))
+            server.sendmail(gmail_user, email.strip(), msg.as_string())
+        except Exception as e:
+            print(f"❌ Error enviando a {email}: {e}")
+            continue
+
+    server.quit()
+    print("✅ TODO COMPLETADO CON ÉXITO.")
+
+except Exception as e:
+    sys.exit(f"❌ Error crítico de conexión Gmail: {e}")

@@ -1,19 +1,33 @@
-Aquí tenéis mi análisis de la Jornada 15, servido sin adornos ni florituras:
+¡Desde la redacción de Gigantes, vuestro cronista de cabecera! La Jornada 15 de la Liga Endesa nos ha dejado sin aliento, una vez más, confirmando que nuestra ACB es una liga de emociones fuertes y talentos desbordantes. Pero si un nombre debe grabarse a fuego, es el del eterno **Ante Tomic**, que no solo reinó, sino que sentó cátedra.
 
-# El Rifle de Hunt: Una Jornada de Precisión Letal
+---
 
-## El Foco (MVP)
+## ¡TOMIC, LA LEYENDA VIVA, DOMINA LA PINTURA Y GUÍA AL JOVENTUT HACIA UNA VICTORIA DE PURA ÉPICA!
 
-La Jornada 15 nos dejó varias actuaciones individuales destacadas, pero el rendimiento de **C. Hunt (JOV)** merece una mención especial. Sus 35 puntos con un *True Shooting Percentage* del 109.6% no son solo una cifra alta, sino un auténtico recital de eficiencia ofensiva. Conseguir esta cifra en 35 puntos sugiere una selección de tiro impecable, un dominio total desde la línea de personal y una capacidad para castigar la defensa rival con cada posesión. Es una estadística que nos obliga a mirar más allá de la hoja de anotación bruta y entender el valor real de cada lanzamiento. Sí, su impacto en rebotes y asistencias fue limitado (2 rebotes, 2 asistencias), pero su rol fue el de un ejecutor puro, y lo cumplió con una eficacia pocas veces vista. **R. Obasohan (MAN)**, con un GmSc de 26.4 y un 85.5% de TS% sobre 32 puntos, también firmó una actuación de élite, demostrando que la eficiencia estuvo a la orden del día, pero Hunt operó en otra órbita.
+La Jornada 15 ha sido testigo de una exhibición que pasará a los anales de nuestra competición. **Ante Tomic (JOV)**, el pívot croata, se alzó con el merecido galardón de MVP de la jornada, y lo hizo a lo grande. Con una estratosférica **valoración de 39**, Tomic no solo jugó al baloncesto; lo dictó. Sus **24 puntos** fueron una declaración de intenciones, anotando con la elegancia y la solvencia que solo los grandes maestros poseen. Pero su impacto no se detuvo ahí: con **15 rebotes** (un doble-doble de época), controló ambas pinturas con una autoridad incontestable, erigiéndose como el faro que iluminó el camino de la Penya hacia una victoria que confirma el buen momento de los verdinegros. Una actuación que trasciende las estadísticas y que evidencia la calidad imperecedera de un jugador llamado a dejar huella eterna. Fue el motor, el corazón y el alma de su equipo cuando más lo necesitaban.
 
-## Pizarra Táctica (Equipos)
+---
 
-En el análisis colectivo, el **BAR** dictó cátedra en ataque, registrando un estratosférico 159.1 puntos por 100 posesiones. Una cifra que no solo domina la jornada, sino que roza lo histórico. Alcanzar un *Offensive Rating* de esta magnitud no es casualidad; habla de una ejecución táctica superior, un *spacing* óptimo y una toma de decisiones envidiable. Es la prueba de que, cuando los engranajes funcionan, el ataque puede ser una fuerza imparable. En el otro extremo del espectro, vimos a **BUR** apostar por un *Pace* elevado, con 83.5 posesiones, buscando un ritmo de partido frenético que suele favorecer los ataques en transición. Por su parte, **UNI** intentó imponerse desde el perímetro, lanzando 37 triples, pero su escaso 10/37 (27%) nos deja claro que la cantidad no siempre se traduce en calidad, y que una buena estrategia de volumen debe ir acompañada de un acierto mínimo para ser efectiva.
+### 🌟 Zona Noble: Destellos de Genialidad y Eficiencia Bávara
 
-## Under the Radar (El Outsider)
+Pero Tomic no estuvo solo en su empeño por deslumbrar. Otros nombres brillaron con luz propia, recordándonos la riqueza de nuestra Liga Endesa. **R. Obasohan (MAN)** firmó una actuación memorable con **35 de valoración** y **32 puntos**, una exhibición pura de puntos, energía y coraje que mantuvo a su equipo en vilo. Y qué decir de su compañero de batallas en el quinteto de la semana, **C. Hunt (JOV)**, que con **32 de valoración** y unos escandalosos **35 puntos** secundó a su capitán Tomic para formar una pareja interior demoledora que dinamitó cualquier defensa rival.
 
-El apartado 'Under the Radar' de esta semana va para **C. Frisch (BKN)**. El término 'microondas' se inventó para actuaciones como la suya: 19 puntos en apenas 15:15 minutos en pista. Una inyección de anotación instantánea, capaz de cambiar el momentum de un partido en un abrir y cerrar de ojos, sin necesidad de acumular minutos en cancha.
+Y si hablamos de eficiencia colectiva, el **Barça** volvió a dar una lección de baloncesto total. Los azulgranas firmaron el mejor ataque de la jornada, con un demoledor **Ratio Ofensivo de 159.1 puntos por cada 100 posesiones**. Una auténtica máquina de generar ventajas y anotar, demostrando por qué son uno de los grandes dominadores de la competición.
 
-## Cierre
+---
 
-La Jornada 16 nos dirá si estos picos de rendimiento son sostenibles o meros destellos.
+### 🔭 Radar de la Jornada 16: ¡Atentos a los Tiburones!
+
+Con la Jornada 15 ya en los libros, nuestros radares ya apuntan con precisión quirúrgica a lo que viene. Y hay nombres que llegan al próximo asalto en un estado de forma, sencillamente, **terrorífico**.
+
+**Andrej Tomic (JOV)**, con una media de **22.0 de valoración** en los últimos tres partidos, es una garantía de espectáculo y dominio interior. Tras su exhibición esta semana, no le quiten el ojo de encima; su inspiración no es flor de un día.
+
+Le acompaña en este selecto grupo **R. Obasohan (MAN)**, que encadena **21.3 de valoración** en sus últimas tres apariciones. Un auténtico torbellino anotador y generador de ventajas, capaz de descoser cualquier defensa con su descaro.
+
+Y ojo, mucho ojo, a **D. Brankovic (BRE)**. Con una impresionante media de **20.7 de valoración** en los últimos tres encuentros, el jugador del Breogán se está erigiendo como una amenaza constante, un factor desequilibrante que pocos esperan y que puede explotar en cualquier momento.
+
+Estén muy atentos, aficionados, porque estos chicos no vienen a pasearse. Vienen a dejarlo todo en la cancha, y su racha actual es un claro aviso a navegantes.
+
+---
+
+¡Hasta el próximo bocinazo! Vuestro cronista de la ACB.

@@ -3,7 +3,7 @@ import os
 import google.generativeai as genai
 import sys
 
-# Función para guardar log y salir sin romper el workflow
+# Función para guardar el resultado (o error) y que GitHub no se queje
 def guardar_salida(mensaje, nombre_archivo="newsletter_borrador.md"):
     print(mensaje)
     with open(nombre_archivo, "w", encoding="utf-8") as f:
@@ -35,55 +35,57 @@ try:
     df_week = df[df['Week'] == ultima_jornada]
     print(f"🤖 Analizando datos de: {ultima_jornada}")
 
-    # 3. PREPARAR DATOS
+    # 3. PREPARAR DATOS (Texto para la IA)
     top_players = df_week.sort_values('GmSc', ascending=False).head(3)
-    top_text = "\n".join([f"- {row['Name']} ({row['Team']}): {row['PTS']}pts, {row['GmSc']} val" for i, row in top_players.iterrows()])
+    # Creamos una lista formateada
+    top_text = ""
+    for i, row in top_players.iterrows():
+        top_text += f"- {row['Name']} ({row['Team']}): {row['PTS']} pts, {row['Reb_T']} reb, {row['AST']} ast. Val: {row['VAL']}.\n"
     
+    # Buscamos al tirador eficiente
     shooters = df_week[(df_week['PTS'] >= 10)].sort_values('TS%', ascending=False).head(1)
-    shooter_text = f"{shooters.iloc[0]['Name']} ({shooters.iloc[0]['TS%']}% TS)" if not shooters.empty else "N/A"
+    shooter_text = f"{shooters.iloc[0]['Name']} ({shooters.iloc[0]['Team']})" if not shooters.empty else "N/A"
+    shooter_stat = f"{shooters.iloc[0]['TS%']}% TS" if not shooters.empty else ""
 
+    # 4. EL PROMPT (Instrucciones)
     prompt = f"""
-    Escribe una newsletter de baloncesto ACB sobre la {ultima_jornada}.
-    Destacados:
+    Actúa como un periodista deportivo experto en baloncesto ACB.
+    Escribe una newsletter breve, emocionante y con emojis sobre la {ultima_jornada}.
+
+    DATOS DE LA JORNADA:
+    🔥 MVP y Destacados:
     {top_text}
-    Eficiencia: {shooter_text}
+
+    🎯 Jugador más eficiente (Francotirador):
+    {shooter_text} con un {shooter_stat} de True Shooting.
+
+    ESTRUCTURA OBLIGATORIA (Usa Markdown):
+    # 🏀 Resumen de la {ultima_jornada}
     
-    Usa formato Markdown. Título con emojis. Breve y directo.
+    ### 👑 El MVP de la semana
+    [Escribe un párrafo potente sobre el mejor jugador de la lista]
+
+    ### 🚀 Actuaciones destacadas
+    [Menciona brevemente a los otros dos jugadores top]
+
+    ### 💎 El dato Moneyball
+    [Una frase sobre la eficiencia del tirador mencionado]
+
+    ¡Nos vemos la semana que viene!
     """
 
-    # 4. INTENTO DE GENERACIÓN ROBUSTO
-    # Primero intentamos con 'gemini-pro' (el estándar más compatible)
-    nombre_modelo = 'gemini-pro'
+    # 5. GENERACIÓN CON GEMINI 2.5 FLASH
+    # Usamos el nombre exacto que apareció en tu lista
+    nombre_modelo = 'gemini-2.5-flash'
     
-    try:
-        print(f"Intentando usar modelo: {nombre_modelo}...")
-        model = genai.GenerativeModel(nombre_modelo)
-        response = model.generate_content(prompt)
-        contenido = response.text
-        
-        # ÉXITO
-        mensaje_final = f"{contenido}\n\n_(Generado por {nombre_modelo})_"
-        guardar_salida(mensaje_final)
-
-    except Exception as e_gen:
-        # SI FALLA, LISTAMOS LOS MODELOS DISPONIBLES PARA DIAGNÓSTICO
-        print(f"⚠️ Falló {nombre_modelo}. Listando modelos disponibles...")
-        
-        lista_modelos = []
-        try:
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    lista_modelos.append(m.name)
-        except:
-            lista_modelos = ["No se pudo obtener la lista"]
-
-        mensaje_error = (
-            f"# ⚠️ Error generando contenido\n\n"
-            f"El modelo '{nombre_modelo}' falló: {e_gen}\n\n"
-            f"**Modelos disponibles en tu cuenta:**\n"
-            f"{chr(10).join(['- ' + m for m in lista_modelos])}"
-        )
-        guardar_salida(mensaje_error)
+    print(f"⚡ Solicitando texto a {nombre_modelo}...")
+    model = genai.GenerativeModel(nombre_modelo)
+    response = model.generate_content(prompt)
+    
+    contenido = response.text
+    
+    # 6. GUARDAR ÉXITO
+    guardar_salida(contenido)
 
 except Exception as e:
-    guardar_salida(f"❌ Error crítico en el script: {e}")
+    guardar_salida(f"❌ Error procesando el script: {e}")

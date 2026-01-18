@@ -11,7 +11,6 @@ import numpy as np
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
-# Diccionario de Equipos (Estético)
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
@@ -124,11 +123,11 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA (CON CLAVE CORREGIDA PARA GOOGLE SEARCH)
+# 5. GENERACIÓN IA CON GOOGLE SEARCH (CORREGIDO)
 # ==============================================================================
 
 prompt = f"""
-Actúa como un Verificador de Datos (Fact-Checker) y Periodista experto en la Liga Endesa (ACB), Temporada 2025/2026.
+Actúa como Verificador de Datos (Fact-Checker) y Periodista ACB (Temporada 2025/2026).
 
 DATOS A PROCESAR:
 MVP: {txt_mvp}
@@ -141,24 +140,24 @@ CONTEXTO:
 TENDENCIAS:
 {txt_trends}
 
-INSTRUCCIONES DE BÚSQUEDA Y VERIFICACIÓN (OBLIGATORIO):
+INSTRUCCIONES OBLIGATORIAS (FACT-CHECKING):
 Para CADA jugador mencionado:
-1. **IDENTIFICA** el equipo y la inicial (ej: "F. Alonso" en "Río Breogán").
+1. **DETECTA**: Jugador + Equipo.
 2. **BUSCA EN GOOGLE**: `"Plantilla [Equipo] ACB 2025-2026"`.
-3. **VERIFICA EL NOMBRE**:
-   - ⚠️ Caso Crítico: "F. Alonso" en Breogán es **Francis Alonso**, NO Fernando Alonso.
-   - ⚠️ Caso Crítico: "M. Normantas" en Bilbao es **Margiris**.
-   - ⚠️ Caso Crítico: "D. Brankovic" en Breogán es **Danko**.
-4. **CORRIGE**: Escribe solo el nombre completo verificado.
+3. **VERIFICA Y CORRIGE ALUCINACIONES**:
+   - ⚠️ "F. Alonso" (Breogán) -> Es **Francis Alonso** (Escolta). NO Fernando.
+   - ⚠️ "D. Brankovic" (Breogán) -> Es **Danko Brankovic** (Pívot). NO Dusan.
+   - ⚠️ "M. Normantas" -> Es **Margiris**.
+4. **REDACTA**: Crónica detallada con los nombres corregidos.
 
 ESTRUCTURA:
 ## 🏀 Informe ACB: {ultima_jornada_label}
 
 ### 👑 El MVP
-[Nombre completo VERIFICADO y análisis]
+[Nombre completo verificado + Análisis]
 
 ### 🚀 Radar de Eficiencia
-[Nombres completos VERIFICADOS]
+[Nombres completos verificados + Análisis]
 
 ### 🧠 Pizarra Táctica
 [Equipos]
@@ -168,21 +167,22 @@ ESTRUCTURA:
 """
 
 try:
-    print("🚀 Generando crónica (Verificando plantillas 2025/2026)...")
+    print("🚀 Generando crónica (Buscando datos reales en Google)...")
     
-    # --- AQUÍ ESTABA EL ERROR: USAMOS LA CLAVE CORRECTA AHORA ---
+    # --- CORRECCIÓN FINAL: CLAVE DE HERRAMIENTA VÁLIDA ---
     tools_config = [
         {"google_search_retrieval": {}} 
     ]
     
     model = genai.GenerativeModel(MODEL_NAME, tools=tools_config)
     
-    # Generar contenido
     response = model.generate_content(prompt)
     
-    texto = response.text
-    texto = texto.replace(":\n-", ":\n\n-")
-    guardar_salida(texto)
+    if response.text:
+        texto = response.text.replace(":\n-", ":\n\n-")
+        guardar_salida(texto)
+    else:
+        print("❌ Error: La respuesta del modelo vino vacía.")
 
 except Exception as e:
     guardar_salida(f"❌ Error Gemini: {e}")

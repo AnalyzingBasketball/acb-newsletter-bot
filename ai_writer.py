@@ -11,12 +11,27 @@ import numpy as np
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
+# Diccionario de Equipos
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
     'COV': 'Covirán Granada', 'JOV': 'Joventut Badalona', 'RMB': 'Real Madrid', 'GCA': 'Dreamland Gran Canaria',
     'CAZ': 'Casademont Zaragoza', 'BKN': 'Baskonia', 'UCM': 'UCAM Murcia', 'MBA': 'MoraBanc Andorra',
     'VBC': 'Valencia Basket', 'BAR': 'Barça'
+}
+
+# --- RED DE SEGURIDAD (CORRECCIONES VIP) ---
+# Se aplica ANTES de la IA para garantizar 100% de acierto en los casos críticos
+# que ya sabemos que fallan (Danko/Dusan, Francis/Fernando).
+CORRECCIONES_VIP = {
+    "F. Alonso": "Francis Alonso",
+    "D. Brankovic": "Danko Brankovic",
+    "M. Normantas": "Margiris Normantas",
+    "A. Best": "Aaron Best",
+    "C. Hunt": "Cameron Hunt",
+    "T. Forrest": "Trent Forrest",
+    "E. Happ": "Ethan Happ",
+    "A. Tomic": "Ante Tomic"
 }
 
 # ==============================================================================
@@ -47,6 +62,10 @@ def extraer_numero_jornada(texto):
     match = re.search(r'\d+', str(texto))
     return int(match.group()) if match else 0
 
+def clean_name(name_raw):
+    """Si el nombre está en la lista VIP, lo corrige ya. Si no, lo deja para que la IA lo busque."""
+    return CORRECCIONES_VIP.get(name_raw, name_raw)
+
 # ==============================================================================
 # 3. CARGA DE DATOS
 # ==============================================================================
@@ -69,13 +88,15 @@ df_week = df[df['Week'] == ultima_jornada_label]
 print(f"🤖 Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
-# 4. PREPARACIÓN DE DATOS
+# 4. PREPARACIÓN DE DATOS (Aplicando Red de Seguridad)
 # ==============================================================================
 # A. MVP
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
 mvp = pool.sort_values('VAL', ascending=False).iloc[0]
-txt_mvp = (f"{mvp['Name']} ({get_team_name(mvp['Team'])}): {b(mvp['VAL'])} VAL, "
+
+mvp_name = clean_name(mvp['Name']) # Corrección automática aquí
+txt_mvp = (f"{mvp_name} ({get_team_name(mvp['Team'])}): {b(mvp['VAL'])} VAL, "
            f"{b(mvp['PTS'])} PTS, {b(mvp['Reb_T'])} REB.")
 
 # B. DESTACADOS
@@ -83,7 +104,8 @@ resto = df_week[df_week['PlayerID'] != mvp['PlayerID']]
 top_rest = resto.sort_values('VAL', ascending=False).head(3)
 txt_rest = ""
 for _, row in top_rest.iterrows():
-    txt_rest += f"- {row['Name']} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL.\n"
+    r_name = clean_name(row['Name']) # Corrección automática aquí
+    txt_rest += f"- {r_name} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL.\n"
 
 # C. EQUIPOS
 team_agg = df_week.groupby('Team').agg({
@@ -106,9 +128,12 @@ txt_teams = f"""
 # D. CONTEXTO
 lider_ts = df_week[df_week['PTS'] >= 10].sort_values('TS%', ascending=False).iloc[0]
 lider_usg = df_week.sort_values('USG%', ascending=False).iloc[0]
+ts_name = clean_name(lider_ts['Name'])
+usg_name = clean_name(lider_usg['Name'])
+
 txt_context = f"""
-- Francotirador (TS%): {lider_ts['Name']} ({b(lider_ts['TS%'], 1, True)}).
-- Dominador (USG%): {lider_usg['Name']} ({b(lider_usg['USG%'], 1, True)} de uso).
+- Francotirador (TS%): {ts_name} ({b(lider_ts['TS%'], 1, True)}).
+- Dominador (USG%): {usg_name} ({b(lider_usg['USG%'], 1, True)} de uso).
 """
 
 # E. TENDENCIAS
@@ -119,17 +144,18 @@ if len(jornadas_unicas) >= 1:
     means = df_last.groupby(['Name', 'Team'])[['VAL', 'PTS', 'TS%']].mean().reset_index()
     hot = means.sort_values('VAL', ascending=False).head(5)
     for _, row in hot.iterrows():
-        txt_trends += (f"- {row['Name']} ({get_team_name(row['Team'], False)}): "
+        t_name = clean_name(row['Name']) # Corrección automática aquí
+        txt_trends += (f"- {t_name} ({get_team_name(row['Team'], False)}): "
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA CON GOOGLE SEARCH (CORREGIDO)
+# 5. GENERACIÓN IA (CON GOOGLE SEARCH ACTIVADO CORRECTAMENTE)
 # ==============================================================================
 
 prompt = f"""
-Actúa como Verificador de Datos (Fact-Checker) y Periodista ACB (Temporada 2025/2026).
+Actúa como Periodista Deportivo ACB (Temporada 2025/2026).
 
-DATOS A PROCESAR:
+DATOS A PROCESAR (Algunos nombres ya están corregidos, otros abreviados):
 MVP: {txt_mvp}
 DESTACADOS:
 {txt_rest}
@@ -140,15 +166,12 @@ CONTEXTO:
 TENDENCIAS:
 {txt_trends}
 
-INSTRUCCIONES OBLIGATORIAS (FACT-CHECKING):
-Para CADA jugador mencionado:
-1. **DETECTA**: Jugador + Equipo.
-2. **BUSCA EN GOOGLE**: `"Plantilla [Equipo] ACB 2025-2026"`.
-3. **VERIFICA Y CORRIGE ALUCINACIONES**:
-   - ⚠️ "F. Alonso" (Breogán) -> Es **Francis Alonso** (Escolta). NO Fernando.
-   - ⚠️ "D. Brankovic" (Breogán) -> Es **Danko Brankovic** (Pívot). NO Dusan.
-   - ⚠️ "M. Normantas" -> Es **Margiris**.
-4. **REDACTA**: Crónica detallada con los nombres corregidos.
+INSTRUCCIONES DE VERIFICACIÓN (OBLIGATORIO):
+1. **SI EL NOMBRE YA ESTÁ COMPLETO** (ej: "Francis Alonso", "Danko Brankovic"): Úsalo tal cual. NO lo cambies.
+2. **SI EL NOMBRE ESTÁ ABREVIADO** (ej: "J. Smith"):
+   - USA GOOGLE SEARCH: Busca `"Plantilla [Equipo] ACB 2025-2026"`.
+   - Verifica el nombre completo real.
+3. **REDACCIÓN**: Escribe una crónica densa en datos y profesional.
 
 ESTRUCTURA:
 ## 🏀 Informe ACB: {ultima_jornada_label}
@@ -167,22 +190,20 @@ ESTRUCTURA:
 """
 
 try:
-    print("🚀 Generando crónica (Buscando datos reales en Google)...")
+    print("🚀 Generando crónica (Modo Híbrido: Python + Google Search)...")
     
-    # --- CORRECCIÓN FINAL: CLAVE DE HERRAMIENTA VÁLIDA ---
+    # --- CORRECCIÓN FINAL: LA CLAVE QUE PIDE TU ERROR ---
     tools_config = [
-        {"google_search_retrieval": {}} 
+        {"google_search": {}} 
     ]
     
     model = genai.GenerativeModel(MODEL_NAME, tools=tools_config)
     
     response = model.generate_content(prompt)
     
-    if response.text:
-        texto = response.text.replace(":\n-", ":\n\n-")
-        guardar_salida(texto)
-    else:
-        print("❌ Error: La respuesta del modelo vino vacía.")
+    texto = response.text
+    texto = texto.replace(":\n-", ":\n\n-")
+    guardar_salida(texto)
 
 except Exception as e:
     guardar_salida(f"❌ Error Gemini: {e}")

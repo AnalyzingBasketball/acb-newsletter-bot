@@ -8,11 +8,10 @@ import numpy as np
 # ==============================================================================
 # 1. CONFIGURACIÓN
 # ==============================================================================
-# Usamos el modelo con capacidad de búsqueda
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-flash" 
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
-# Diccionario de Equipos (Esto sí conviene mantenerlo para limpieza visual rápida)
+# Diccionario de Equipos
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
@@ -55,13 +54,11 @@ def extraer_numero_jornada(texto):
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key: guardar_salida("❌ Error: Falta GEMINI_API_KEY.")
 
-# Configuración básica
 genai.configure(api_key=api_key)
 
 if not os.path.exists(FILE_PATH): guardar_salida("❌ No hay CSV.")
 df = pd.read_csv(FILE_PATH)
 
-# Limpieza rápida
 cols_num = ['VAL', 'PTS', 'Reb_T', 'AST', 'Win', 'Game_Poss', 'TO', 'TS%', 'USG%']
 for col in cols_num:
     if col in df.columns:
@@ -76,13 +73,11 @@ print(f"🤖 Analizando {ultima_jornada_label}...")
 # ==============================================================================
 # 4. PREPARACIÓN DE DATOS
 # ==============================================================================
-
 # A. MVP
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
 mvp = pool.sort_values('VAL', ascending=False).iloc[0]
 
-# Nota: Pasamos el nombre tal cual ("F. Alonso"), Gemini buscará quién es.
 txt_mvp = (f"{mvp['Name']} ({get_team_name(mvp['Team'])}): {b(mvp['VAL'])} VAL, "
            f"{b(mvp['PTS'])} PTS (TS%: {b(mvp['TS%'], 1, True)}), {b(mvp['Reb_T'])} REB.")
 
@@ -114,7 +109,6 @@ txt_teams = f"""
 # D. CONTEXTO
 lider_ts = df_week[df_week['PTS'] >= 10].sort_values('TS%', ascending=False).iloc[0]
 lider_usg = df_week.sort_values('USG%', ascending=False).iloc[0]
-
 txt_context = f"""
 - Francotirador (TS%): {lider_ts['Name']} ({b(lider_ts['TS%'], 1, True)}).
 - Dominador (USG%): {lider_usg['Name']} ({b(lider_usg['USG%'], 1, True)} de uso).
@@ -132,63 +126,62 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA CON GOOGLE SEARCH
+# 5. GENERACIÓN IA CON BÚSQUEDA "PARANOICA"
 # ==============================================================================
 
-# PROMPT ESPECIAL PARA BÚSQUEDA
 prompt = f"""
-Eres un Analista de Baloncesto experto en Liga Endesa (ACB).
+Eres el redactor jefe de la Liga Endesa. Tu máxima prioridad es la PRECISIÓN EN LOS NOMBRES.
 
-TU MISIÓN:
-Escribir la crónica de la jornada {ultima_jornada_label} usando los datos proporcionados.
-
-HERRAMIENTA OBLIGATORIA:
-Tienes acceso a Google Search. **ÚSALO** para verificar los nombres de los jugadores que aparecen abreviados en los datos.
-- Ejemplo: Si ves "F. Alonso" en los datos, busca "F. Alonso baloncesto equipo actual". Verás que es **Francis Alonso** (jugador del Breogán), NO Fernando Alonso (F1).
-- Ejemplo: Si ves "D. Musa", verifica si sigue en el Real Madrid o si fichó por otro equipo en 2025 (ej: Dubai).
-- NO ALUCINES POSICIONES: Busca la posición real del jugador si no la sabes.
-
-DATOS DE LA JORNADA:
+DATOS A PROCESAR:
 MVP: {txt_mvp}
 DESTACADOS:
 {txt_rest}
 EQUIPOS:
 {txt_teams}
-CONTEXTO AVANZADO:
+CONTEXTO:
 {txt_context}
-TENDENCIAS (Últimas semanas):
+TENDENCIAS:
 {txt_trends}
 
-ESTRUCTURA DE LA CRÓNICA:
-## 🏀 Informe ACB: {ultima_jornada_label}
+INSTRUCCIONES DE VERIFICACIÓN ESTRICTA (GOOGLE SEARCH):
+Para CADA jugador mencionado en los datos (ej: "D. Brankovic", "M. Normantas", "F. Alonso"), DEBES realizar el siguiente proceso OBLIGATORIO antes de escribir su nombre:
+
+1. 🔍 **BUSCA EN GOOGLE**: Escribe internamente la query: `[Nombre Abreviado] [Equipo] ACB plantilla`.
+2. 👁️ **LEE EL RESULTADO**: Busca la ficha oficial o noticias recientes.
+3. ❌ **CORRIGE EL SESGO**:
+   - Si ves "M. Normantas", NO ASUMAS "Martynas". Busca y verás que en Bilbao Basket juega **Margiris Normantas**.
+   - Si ves "D. Brankovic", NO ASUMAS "Dusan". Busca y verás que en Bayern/ACB juega **Danko Brankovic**.
+   - Si ves "F. Alonso", confirma que es **Francis Alonso**.
+4. ✅ **ESCRIBE EL NOMBRE VERIFICADO**.
+
+ESTRUCTURA DEL EMAIL:
+## 🏀 Crónica ACB: {ultima_jornada_label}
 
 ### 👑 El MVP
-[Analiza al MVP usando su nombre completo verificado.]
+[Nombre Completo VERIFICADO + Apellido]
 
 ### 🚀 Radar de Eficiencia
-[Destacados. Verifica sus nombres.]
+[Nombres Completos VERIFICADOS]
 
 ### 🧠 Pizarra Táctica
-[Equipos.]
+[Equipos]
 
 ### 🔥 Tendencias
 {txt_trends}
 """
 
 try:
-    print("🚀 Generando crónica (Buscando datos reales en Google)...")
+    print("🚀 Generando crónica (Modo Verificación Estricta activado)...")
     
-    # ACTIVAMOS LA HERRAMIENTA DE BÚSQUEDA
-    tools_config = [
-        {"google_search": {}} 
-    ]
+    # Herramienta de búsqueda activada
+    tools_config = [ {"google_search": {}} ]
     
     model = genai.GenerativeModel(MODEL_NAME, tools=tools_config)
     
-    # Enviamos el prompt
+    # Aumentamos la temperatura ligeramente para fomentar que use la herramienta creativa de búsqueda
+    # pero mantenemos el control con el prompt estricto.
     response = model.generate_content(prompt)
     
-    # Procesamos la respuesta
     texto = response.text
     texto = texto.replace(":\n-", ":\n\n-")
     guardar_salida(texto)

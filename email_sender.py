@@ -9,8 +9,6 @@ import requests
 
 # --- 1. CONFIGURACIÓN ---
 URL_LOGO = "https://raw.githubusercontent.com/AnalyzingBasketball/acb-newsletter-bot/refs/heads/main/logo.png"
-
-# 🔴 URL DE BAJA (Wix) - Enlace fijo para todos
 URL_BAJA = "https://analyzingbasketball.wixsite.com/home/baja"
 
 gmail_user = os.environ.get("GMAIL_USER")
@@ -18,24 +16,24 @@ gmail_password = os.environ.get("GMAIL_PASSWORD")
 url_suscriptores = os.environ.get("URL_SUSCRIPTORES")
 webhook_make = os.environ.get("MAKE_WEBHOOK_URL")
 
-# Verificación de seguridad
 if not gmail_user or not gmail_password:
     print("❌ Error: Faltan credenciales GMAIL_USER o GMAIL_PASSWORD.")
     sys.exit(1)
 
-# --- 2. LEER INFORME ---
+# --- 2. LEER INFORME (CORREGIDO: RESPETA LOS ESPACIOS) ---
 ARCHIVO_MD = "newsletter_borrador.md"
 if not os.path.exists(ARCHIVO_MD):
     print(f"❌ Error: No se encuentra {ARCHIVO_MD}")
     sys.exit(1)
 
+# LEEMOS EL ARCHIVO TAL CUAL (SIN BORRAR LÍNEAS EN BLANCO)
 with open(ARCHIVO_MD, "r", encoding="utf-8") as f:
-    lines = [line.strip() for line in f.readlines() if line.strip()]
-    md_content = "\n".join(lines)
+    md_content = f.read()
 
-titulo_clean = lines[0].replace('#', '').strip() if lines else "Informe ACB"
+# Para el título del email, cogemos solo la primera línea
+titulo_clean = md_content.split('\n')[0].replace('#', '').strip() if md_content else "Informe ACB"
 
-# --- 3. PUBLICAR EN LINKEDIN (Opcional) ---
+# --- 3. PUBLICAR EN LINKEDIN ---
 if webhook_make:
     try:
         texto_linkedin = f"🏀 {titulo_clean}\n\n📊 Nuevo análisis disponible.\nSuscríbete: https://analyzingbasketball.wixsite.com/home/newsletter\n\n#ACB #Data"
@@ -46,10 +44,10 @@ if webhook_make:
 
 # --- 4. PREPARAR CAMPAÑA ---
 print("📥 Preparando campaña de Email...")
+
+# Convertimos a HTML (Ahora sí detectará las listas gracias a los espacios)
 html_body = markdown.markdown(md_content)
 
-# Plantilla HTML Base
-# Nota: Ya ponemos la URL_BAJA directamente aquí, porque es la misma para todos.
 plantilla_html_base = f"""
 <!DOCTYPE html>
 <html>
@@ -99,21 +97,16 @@ if url_suscriptores:
     try:
         print(f"🔍 Descargando lista de suscriptores...")
         df_subs = pd.read_csv(url_suscriptores, on_bad_lines='skip', engine='python')
-        
-        # 1. Normalizamos columnas (minusculas y sin espacios)
         df_subs.columns = [str(c).lower().strip() for c in df_subs.columns]
         
-        # 2. Buscamos la columna del email
         col_email = None
         for col in df_subs.columns:
             if col in ['email', 'correo', 'e-mail', 'mail']:
                 col_email = col
                 break
         
-        # 3. Si falla por nombre, buscamos por contenido (si tiene una @)
         if not col_email:
             for col in df_subs.columns:
-                # Cogemos 5 muestras para ver si parecen emails
                 sample = df_subs[col].astype(str).head(5).tolist()
                 if any("@" in s for s in sample):
                     col_email = col
@@ -121,7 +114,6 @@ if url_suscriptores:
 
         if col_email:
             nuevos = df_subs[col_email].dropna().astype(str).unique().tolist()
-            # Filtro de seguridad: debe tener @ y .
             nuevos = [e.strip() for e in nuevos if "@" in e and "." in e]
             
             count = 0
@@ -131,7 +123,7 @@ if url_suscriptores:
                     count += 1
             print(f"✅ Se encontraron {count} suscriptores nuevos en el CSV.")
         else:
-            print(f"⚠️ ATENCIÓN: No se encontró columna de Email en el CSV. Columnas detectadas: {df_subs.columns.tolist()}")
+            print(f"⚠️ ATENCIÓN: No se encontró columna de Email.")
 
     except Exception as e:
         print(f"⚠️ Error crítico leyendo suscriptores: {e}")
@@ -152,8 +144,6 @@ try:
             msg['From'] = f"Analyzing Basketball <{gmail_user}>"
             msg['To'] = email
             msg['Subject'] = f"🏀 Informe: {titulo_clean}"
-            
-            # Adjuntamos el HTML (que ya incluye el link de baja fijo)
             msg.attach(MIMEText(plantilla_html_base, 'html'))
             
             server.sendmail(gmail_user, email, msg.as_string())

@@ -6,19 +6,19 @@ import markdown
 import sys
 import pandas as pd
 import requests
-import urllib.parse  # <--- NUEVO: Para limpiar el email en la URL
 
 # --- 1. CONFIGURACIÓN ---
 URL_LOGO = "https://raw.githubusercontent.com/AnalyzingBasketball/acb-newsletter-bot/refs/heads/main/logo.png"
 
-# 🔴 PEGA AQUÍ LA URL DE TU FORMULARIO TALLY (El que creaste con el campo hidden 'email')
-URL_TALLY_BAJA = "https://tally.so/r/GxpaYZ" 
+# 🔴 URL DE BAJA (Wix) - Enlace fijo para todos
+URL_BAJA = "https://analyzingbasketball.wixsite.com/home/baja"
 
 gmail_user = os.environ.get("GMAIL_USER")
 gmail_password = os.environ.get("GMAIL_PASSWORD")
 url_suscriptores = os.environ.get("URL_SUSCRIPTORES")
 webhook_make = os.environ.get("MAKE_WEBHOOK_URL")
 
+# Verificación de seguridad
 if not gmail_user or not gmail_password:
     print("❌ Error: Faltan credenciales GMAIL_USER o GMAIL_PASSWORD.")
     sys.exit(1)
@@ -35,18 +35,12 @@ with open(ARCHIVO_MD, "r", encoding="utf-8") as f:
 
 titulo_clean = lines[0].replace('#', '').strip() if lines else "Informe ACB"
 
-# --- 3. PUBLICAR EN LINKEDIN (vía Make) ---
+# --- 3. PUBLICAR EN LINKEDIN (Opcional) ---
 if webhook_make:
-    texto_linkedin = f"""🏀 {titulo_clean}
-
-📊 Nuevo análisis de datos disponible.
-Lee el informe completo y suscríbete aquí: https://analyzingbasketball.wixsite.com/home/newsletter
-
-#ACB #DataScouting #AnalyzingBasketball"""
-    
     try:
+        texto_linkedin = f"🏀 {titulo_clean}\n\n📊 Nuevo análisis disponible.\nSuscríbete: https://analyzingbasketball.wixsite.com/home/newsletter\n\n#ACB #Data"
         requests.post(webhook_make, json={"texto": texto_linkedin})
-        print("✅ LinkedIn: Notificación enviada a Make.")
+        print("✅ LinkedIn: Notificación enviada.")
     except Exception as e:
         print(f"⚠️ Error LinkedIn: {e}")
 
@@ -54,7 +48,8 @@ Lee el informe completo y suscríbete aquí: https://analyzingbasketball.wixsite
 print("📥 Preparando campaña de Email...")
 html_body = markdown.markdown(md_content)
 
-# NOTA: En la plantilla ponemos un marcador {LINK_BAJA_PERSONALIZADO} que sustituiremos luego
+# Plantilla HTML Base
+# Nota: Ya ponemos la URL_BAJA directamente aquí, porque es la misma para todos.
 plantilla_html_base = f"""
 <!DOCTYPE html>
 <html>
@@ -76,7 +71,7 @@ plantilla_html_base = f"""
         <div style='background-color: #ffffff; padding: 20px; text-align: center; padding-bottom: 40px;'>
             <a href="https://analyzingbasketball.wixsite.com/home/newsletter" 
                style='display: inline-block; background-color: #000000; color: #ffffff; padding: 14px 30px; text-decoration: none; font-weight: bold; font-size: 14px; letter-spacing: 1px; border-radius: 4px;'>
-               RECOMENDAR
+               LEER ONLINE
             </a>
         </div>
 
@@ -85,7 +80,7 @@ plantilla_html_base = f"""
             <p style='color: #999999; font-size: 11px; margin-top: 10px;'>&copy; 2026 AB</p>
             
             <p style='margin-top: 20px;'>
-                <a href="LINK_BAJA_PLACEHOLDER" style='color: #cccccc; font-size: 10px; text-decoration: underline;'>
+                <a href="{URL_BAJA}" style='color: #cccccc; font-size: 10px; text-decoration: underline;'>
                     Darse de baja
                 </a>
             </p>
@@ -102,36 +97,44 @@ if gmail_user: lista_emails.append(gmail_user)
 
 if url_suscriptores:
     try:
-        print("🔍 Descargando lista de suscriptores...")
+        print(f"🔍 Descargando lista de suscriptores...")
         df_subs = pd.read_csv(url_suscriptores, on_bad_lines='skip', engine='python')
         
+        # 1. Normalizamos columnas (minusculas y sin espacios)
+        df_subs.columns = [str(c).lower().strip() for c in df_subs.columns]
+        
+        # 2. Buscamos la columna del email
         col_email = None
-        possible_names = ['email', 'correo', 'e-mail', 'mail']
         for col in df_subs.columns:
-            if str(col).lower() in possible_names:
+            if col in ['email', 'correo', 'e-mail', 'mail']:
                 col_email = col
                 break
         
+        # 3. Si falla por nombre, buscamos por contenido (si tiene una @)
         if not col_email:
             for col in df_subs.columns:
-                sample = df_subs[col].dropna().head(5).astype(str)
-                if any("@" in x for x in sample):
+                # Cogemos 5 muestras para ver si parecen emails
+                sample = df_subs[col].astype(str).head(5).tolist()
+                if any("@" in s for s in sample):
                     col_email = col
                     break
-        
+
         if col_email:
-            nuevos_emails = df_subs[col_email].dropna().unique().tolist()
-            nuevos_emails = [e.strip() for e in nuevos_emails if "@" in str(e)]
+            nuevos = df_subs[col_email].dropna().astype(str).unique().tolist()
+            # Filtro de seguridad: debe tener @ y .
+            nuevos = [e.strip() for e in nuevos if "@" in e and "." in e]
             
-            for e in nuevos_emails:
+            count = 0
+            for e in nuevos:
                 if e not in lista_emails:
                     lista_emails.append(e)
-            print(f"✅ Se encontraron {len(nuevos_emails)} suscriptores.")
+                    count += 1
+            print(f"✅ Se encontraron {count} suscriptores nuevos en el CSV.")
         else:
-            print("⚠️ No se detectó columna de Email en el CSV.")
-            
+            print(f"⚠️ ATENCIÓN: No se encontró columna de Email en el CSV. Columnas detectadas: {df_subs.columns.tolist()}")
+
     except Exception as e:
-        print(f"⚠️ Error leyendo suscriptores: {e}")
+        print(f"⚠️ Error crítico leyendo suscriptores: {e}")
 
 # --- 6. ENVÍO MASIVO ---
 print(f"🚀 Iniciando envío a {len(lista_emails)} destinatarios...")
@@ -145,32 +148,24 @@ try:
 
     for email in lista_emails:
         try:
-            # --- AQUÍ ESTÁ LA MAGIA DE TALLY ---
-            # 1. Codificamos el email (ej: pepe+1@gmail.com -> pepe%2B1%40gmail.com) para que la URL sea válida
-            email_seguro = urllib.parse.quote(email)
-            
-            # 2. Creamos el link completo
-            link_baja = f"{URL_TALLY_BAJA}?email={email_seguro}"
-            
-            # 3. Reemplazamos el marcador en el HTML solo para este usuario
-            html_final = plantilla_html_base.replace("LINK_BAJA_PLACEHOLDER", link_baja)
-            # -----------------------------------
-
             msg = MIMEMultipart()
             msg['From'] = f"Analyzing Basketball <{gmail_user}>"
             msg['To'] = email
             msg['Subject'] = f"🏀 Informe: {titulo_clean}"
-            msg.attach(MIMEText(html_final, 'html'))
+            
+            # Adjuntamos el HTML (que ya incluye el link de baja fijo)
+            msg.attach(MIMEText(plantilla_html_base, 'html'))
             
             server.sendmail(gmail_user, email, msg.as_string())
             enviados += 1
+            print(f"📨 Enviado a: {email}")
             
         except Exception as e:
             print(f"❌ Error enviando a {email}: {e}")
             errores += 1
 
     server.quit()
-    print(f"\n📊 RESUMEN: {enviados} enviados | {errores} fallidos.")
+    print(f"\n📊 FIN: {enviados} enviados | {errores} fallidos.")
 
 except Exception as e:
-    print(f"❌ Error crítico de conexión SMTP: {e}")
+    print(f"❌ Error conectando con Gmail: {e}")

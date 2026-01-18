@@ -1,8 +1,6 @@
 import pandas as pd
 import os
 import google.generativeai as genai
-# IMPORTANTE: Importamos los prototipos para saltarnos el error de validación
-from google.generativeai import protos
 import sys
 import re
 import numpy as np
@@ -13,13 +11,28 @@ import numpy as np
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
-# Mapa de equipos (Solo para estética, no corrige jugadores)
+# Mapa de equipos
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
     'COV': 'Covirán Granada', 'JOV': 'Joventut Badalona', 'RMB': 'Real Madrid', 'GCA': 'Dreamland Gran Canaria',
     'CAZ': 'Casademont Zaragoza', 'BKN': 'Baskonia', 'UCM': 'UCAM Murcia', 'MBA': 'MoraBanc Andorra',
     'VBC': 'Valencia Basket', 'BAR': 'Barça'
+}
+
+# --- LA LISTA DE LA VERDAD ---
+# Si un nombre te da problemas en el futuro, añádelo aquí.
+# Esto corrige el dato ANTES de que la IA lo toque.
+CORRECCIONES_VIP = {
+    "F. Alonso": "Francis Alonso",
+    "D. Brankovic": "Danko Brankovic",
+    "M. Normantas": "Margiris Normantas",
+    "A. Best": "Aaron Best",
+    "C. Hunt": "Cameron Hunt",
+    "T. Forrest": "Trent Forrest",
+    "E. Happ": "Ethan Happ",
+    "A. Tomic": "Ante Tomic",
+    "G. Corbalán": "Gonzalo Corbalán"
 }
 
 # ==============================================================================
@@ -50,6 +63,10 @@ def extraer_numero_jornada(texto):
     match = re.search(r'\d+', str(texto))
     return int(match.group()) if match else 0
 
+def clean_name(name_raw):
+    # Si está en la lista VIP, lo corrige. Si no, devuelve el original (J. Smith)
+    return CORRECCIONES_VIP.get(name_raw, name_raw)
+
 # ==============================================================================
 # 3. CARGA DE DATOS
 # ==============================================================================
@@ -72,15 +89,17 @@ df_week = df[df['Week'] == ultima_jornada_label]
 print(f"🤖 Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
-# 4. PREPARACIÓN DE DATOS (CRUDA, SIN DICCIONARIOS)
+# 4. PREPARACIÓN DE DATOS (CON CORRECCIÓN MANUAL SEGURA)
 # ==============================================================================
-# Enviamos los nombres tal cual salen del CSV (ej: "F. Alonso")
 
 # A. MVP
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
 mvp = pool.sort_values('VAL', ascending=False).iloc[0]
-txt_mvp = (f"{mvp['Name']} ({get_team_name(mvp['Team'])}): {b(mvp['VAL'])} VAL, "
+
+# Aplicamos corrección VIP aquí mismo
+mvp_name = clean_name(mvp['Name'])
+txt_mvp = (f"{mvp_name} ({get_team_name(mvp['Team'])}): {b(mvp['VAL'])} VAL, "
            f"{b(mvp['PTS'])} PTS (TS%: {b(mvp['TS%'], 1, True)}), {b(mvp['Reb_T'])} REB.")
 
 # B. DESTACADOS
@@ -88,7 +107,9 @@ resto = df_week[df_week['PlayerID'] != mvp['PlayerID']]
 top_rest = resto.sort_values('VAL', ascending=False).head(3)
 txt_rest = ""
 for _, row in top_rest.iterrows():
-    txt_rest += f"- {row['Name']} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL.\n"
+    # Aplicamos corrección VIP
+    r_name = clean_name(row['Name'])
+    txt_rest += f"- {r_name} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL.\n"
 
 # C. EQUIPOS
 team_agg = df_week.groupby('Team').agg({
@@ -111,9 +132,13 @@ txt_teams = f"""
 # D. CONTEXTO
 lider_ts = df_week[df_week['PTS'] >= 10].sort_values('TS%', ascending=False).iloc[0]
 lider_usg = df_week.sort_values('USG%', ascending=False).iloc[0]
+# Corrección VIP
+ts_name = clean_name(lider_ts['Name'])
+usg_name = clean_name(lider_usg['Name'])
+
 txt_context = f"""
-- Francotirador (TS%): {lider_ts['Name']} ({b(lider_ts['TS%'], 1, True)}).
-- Dominador (USG%): {lider_usg['Name']} ({b(lider_usg['USG%'], 1, True)} de uso).
+- Francotirador (TS%): {ts_name} ({b(lider_ts['TS%'], 1, True)}).
+- Dominador (USG%): {usg_name} ({b(lider_usg['USG%'], 1, True)} de uso).
 """
 
 # E. TENDENCIAS
@@ -124,17 +149,19 @@ if len(jornadas_unicas) >= 1:
     means = df_last.groupby(['Name', 'Team'])[['VAL', 'PTS', 'TS%']].mean().reset_index()
     hot = means.sort_values('VAL', ascending=False).head(5)
     for _, row in hot.iterrows():
-        txt_trends += (f"- {row['Name']} ({get_team_name(row['Team'], False)}): "
+        # Corrección VIP
+        t_name = clean_name(row['Name'])
+        txt_trends += (f"- {t_name} ({get_team_name(row['Team'], False)}): "
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA CON BÚSQUEDA (MODO PROTOS - INFALIBLE)
+# 5. GENERACIÓN IA (SIN HERRAMIENTAS, SOLO TEXTO)
 # ==============================================================================
 
 prompt = f"""
-Actúa como un Verificador de Datos (Fact-Checker) y Periodista ACB (Temporada 2025/2026).
+Actúa como Periodista Deportivo ACB (Liga Endesa).
 
-DATOS A PROCESAR (Nombres abreviados):
+DATOS DE LA JORNADA (Ya procesados):
 MVP: {txt_mvp}
 DESTACADOS:
 {txt_rest}
@@ -145,48 +172,32 @@ CONTEXTO:
 TENDENCIAS:
 {txt_trends}
 
-INSTRUCCIONES DE BÚSQUEDA OBLIGATORIA:
-Para CADA jugador mencionado arriba que tenga el nombre abreviado:
-
-1. **EJECUTA UNA BÚSQUEDA EN GOOGLE**:
-   - Query: `"Plantilla [Equipo del jugador] ACB 2025-2026"`
-   - Ejemplo: Para "F. Alonso" en Breogán, busca la plantilla.
-
-2. **VERIFICA**:
-   - ⚠️ Caso F. Alonso: Confirma que es **Francis Alonso** (Escolta), NO Fernando.
-   - ⚠️ Caso D. Brankovic: Confirma que es **Danko Brankovic** (Pívot), NO Dusan.
-   - ⚠️ Caso M. Normantas: Confirma que es **Margiris**.
-
-3. **ESCRIBE LA CRÓNICA**:
-   - Usa exclusivamente los nombres completos verificados.
+INSTRUCCIONES:
+1. **NO INVENTES NOMBRES**: Usa los nombres EXACTAMENTE como aparecen en los datos de arriba. Si pone "J. Smith", escribe "J. Smith". Si pone "Francis Alonso", escribe "Francis Alonso".
+2. **NO INVENTES POSICIONES**: Si no sabes si es base o pívot, usa "jugador" o "referente".
+3. **ESTILO**: Periodístico, densa en datos, profesional.
 
 ESTRUCTURA DE SALIDA:
 ## 🏀 Informe ACB: {ultima_jornada_label}
 
 ### 👑 El MVP
-[Nombre completo verificado y análisis]
+[Análisis del MVP]
 
 ### 🚀 Radar de Eficiencia
-[Nombres completos verificados y análisis]
+[Análisis de destacados]
 
 ### 🧠 Pizarra Táctica
-[Equipos]
+[Análisis de equipos]
 
 ### 🔥 Tendencias (Últimas Jornadas)
 {txt_trends}
 """
 
 try:
-    print("🚀 Generando crónica (Búsqueda Activada - Modo Protos)...")
+    print("🚀 Generando crónica (Modo Seguro - Sin Búsqueda)...")
     
-    # --- LA SOLUCIÓN TÉCNICA ---
-    # Usamos protos.Tool directamente. Esto evita que tu librería valide el diccionario
-    # y lance el error "Unknown field", pero envía la orden correcta al servidor.
-    google_search_tool = protos.Tool(
-        google_search=protos.GoogleSearch()
-    )
-    
-    model = genai.GenerativeModel(MODEL_NAME, tools=[google_search_tool])
+    # SIN TOOLS. ESTO NO PUEDE FALLAR.
+    model = genai.GenerativeModel(MODEL_NAME)
     
     response = model.generate_content(prompt)
     

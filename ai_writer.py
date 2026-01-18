@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 import google.generativeai as genai
+# IMPORTANTE: Importamos los prototipos para saltarnos el error de validación
+from google.generativeai import protos
 import sys
 import re
 import numpy as np
@@ -11,6 +13,7 @@ import numpy as np
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
+# Mapa de equipos (Solo para estética, no corrige jugadores)
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
@@ -52,7 +55,6 @@ def extraer_numero_jornada(texto):
 # ==============================================================================
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key: guardar_salida("❌ Error: Falta GEMINI_API_KEY.")
-
 genai.configure(api_key=api_key)
 
 if not os.path.exists(FILE_PATH): guardar_salida("❌ No hay CSV.")
@@ -70,8 +72,10 @@ df_week = df[df['Week'] == ultima_jornada_label]
 print(f"🤖 Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
-# 4. PREPARACIÓN DE DATOS (NOMBRES CRUDOS)
+# 4. PREPARACIÓN DE DATOS (CRUDA, SIN DICCIONARIOS)
 # ==============================================================================
+# Enviamos los nombres tal cual salen del CSV (ej: "F. Alonso")
+
 # A. MVP
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
@@ -124,7 +128,7 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA CON BÚSQUEDA SEGURA
+# 5. GENERACIÓN IA CON BÚSQUEDA (MODO PROTOS - INFALIBLE)
 # ==============================================================================
 
 prompt = f"""
@@ -144,7 +148,7 @@ TENDENCIAS:
 INSTRUCCIONES DE BÚSQUEDA OBLIGATORIA:
 Para CADA jugador mencionado arriba que tenga el nombre abreviado:
 
-1. **EJECUTA UNA BÚSQUEDA**:
+1. **EJECUTA UNA BÚSQUEDA EN GOOGLE**:
    - Query: `"Plantilla [Equipo del jugador] ACB 2025-2026"`
    - Ejemplo: Para "F. Alonso" en Breogán, busca la plantilla.
 
@@ -156,7 +160,7 @@ Para CADA jugador mencionado arriba que tenga el nombre abreviado:
 3. **ESCRIBE LA CRÓNICA**:
    - Usa exclusivamente los nombres completos verificados.
 
-ESTRUCTURA:
+ESTRUCTURA DE SALIDA:
 ## 🏀 Informe ACB: {ultima_jornada_label}
 
 ### 👑 El MVP
@@ -173,20 +177,16 @@ ESTRUCTURA:
 """
 
 try:
-    print("🚀 Generando crónica (Búsqueda Activada)...")
+    print("🚀 Generando crónica (Búsqueda Activada - Modo Protos)...")
     
-    # LA CONFIGURACIÓN SEGURA:
-    # 1. Creamos la herramienta manualmente si es necesario, o usamos el diccionario simple.
-    # Dado que el error anterior fue "FunctionDeclaration", vamos a usar la forma más simple posible
-    # que es soportada por la API REST directa, que es la que usa la librería por debajo.
+    # --- LA SOLUCIÓN TÉCNICA ---
+    # Usamos protos.Tool directamente. Esto evita que tu librería valide el diccionario
+    # y lance el error "Unknown field", pero envía la orden correcta al servidor.
+    google_search_tool = protos.Tool(
+        google_search=protos.GoogleSearch()
+    )
     
-    tools = [
-        {'google_search': {}} # Esta es la sintaxis correcta para la API v1beta
-    ]
-    
-    # IMPORTANTE: Si vuelve a fallar, prueba a quitar 'tools=' y meterlo en config, 
-    # pero esta es la forma estándar documentada.
-    model = genai.GenerativeModel(MODEL_NAME, tools=tools)
+    model = genai.GenerativeModel(MODEL_NAME, tools=[google_search_tool])
     
     response = model.generate_content(prompt)
     

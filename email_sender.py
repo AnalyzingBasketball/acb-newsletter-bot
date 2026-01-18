@@ -86,7 +86,7 @@ plantilla_html_base = f"""
             
             <p style='margin-top: 20px;'>
                 <a href="LINK_BAJA_PLACEHOLDER" style='color: #cccccc; font-size: 10px; text-decoration: underline;'>
-                    Darse de baja de la lista
+                    Darse de baja
                 </a>
             </p>
         </div>

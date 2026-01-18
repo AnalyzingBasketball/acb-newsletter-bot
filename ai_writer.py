@@ -11,7 +11,7 @@ import numpy as np
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
-# Diccionario de Equipos
+# Diccionario de Equipos (Estético)
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
@@ -67,12 +67,11 @@ jornadas_unicas = sorted(df['Week'].unique(), key=extraer_numero_jornada)
 ultima_jornada_label = jornadas_unicas[-1]
 df_week = df[df['Week'] == ultima_jornada_label]
 
-print(f"🤖 Analizando {ultima_jornada_label} (Temporada 2025/2026)...")
+print(f"🤖 Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
 # 4. PREPARACIÓN DE DATOS
 # ==============================================================================
-
 # A. MVP
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
@@ -125,11 +124,11 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS.\n")
 
 # ==============================================================================
-# 5. GENERACIÓN IA CON FACT-CHECKING (TEMPORADA 2025/2026)
+# 5. GENERACIÓN IA (CON CLAVE CORREGIDA PARA GOOGLE SEARCH)
 # ==============================================================================
 
 prompt = f"""
-Actúa como un Verificador de Datos (Fact-Checker) y Periodista Deportivo experto en la Liga Endesa (ACB), Temporada 2025/2026.
+Actúa como un Verificador de Datos (Fact-Checker) y Periodista experto en la Liga Endesa (ACB), Temporada 2025/2026.
 
 DATOS A PROCESAR:
 MVP: {txt_mvp}
@@ -142,27 +141,24 @@ CONTEXTO:
 TENDENCIAS:
 {txt_trends}
 
-INSTRUCCIONES CRÍTICAS DE BÚSQUEDA Y REDACCIÓN:
-Para CADA jugador mencionado arriba, realiza los siguientes pasos ANTES de escribir nada:
+INSTRUCCIONES DE BÚSQUEDA Y VERIFICACIÓN (OBLIGATORIO):
+Para CADA jugador mencionado:
+1. **IDENTIFICA** el equipo y la inicial (ej: "F. Alonso" en "Río Breogán").
+2. **BUSCA EN GOOGLE**: `"Plantilla [Equipo] ACB 2025-2026"`.
+3. **VERIFICA EL NOMBRE**:
+   - ⚠️ Caso Crítico: "F. Alonso" en Breogán es **Francis Alonso**, NO Fernando Alonso.
+   - ⚠️ Caso Crítico: "M. Normantas" en Bilbao es **Margiris**.
+   - ⚠️ Caso Crítico: "D. Brankovic" en Breogán es **Danko**.
+4. **CORRIGE**: Escribe solo el nombre completo verificado.
 
-1. **CONTEXTO TEMPORAL**: Estamos en la temporada **2025-2026**.
-2. **BUSCA EN GOOGLE**: Usa la query precisa: `"Plantilla [Equipo] ACB 2025-2026"`.
-   - Ejemplo: Si ves "F. Alonso (Río Breogán)", busca "Plantilla Río Breogán 2025-2026".
-3. **VERIFICA**:
-   - Confirma que el nombre es **Francis Alonso**, NO Fernando Alonso.
-   - Confirma que **D. Brankovic** en Breogán es **Danko Brankovic** (si sigue en el equipo) o comprueba fichajes recientes.
-   - Confirma nombres balcánicos/lituanos (ej: M. Normantas -> Margiris).
-4. **CORRIGE**: Usa el nombre completo verificado.
-5. **REDACCIÓN**: Escribe una crónica periodística densa en datos, evitando frases vacías.
-
-ESTRUCTURA DE SALIDA:
+ESTRUCTURA:
 ## 🏀 Informe ACB: {ultima_jornada_label}
 
 ### 👑 El MVP
-[Nombre completo verificado y análisis]
+[Nombre completo VERIFICADO y análisis]
 
 ### 🚀 Radar de Eficiencia
-[Nombres completos verificados y análisis]
+[Nombres completos VERIFICADOS]
 
 ### 🧠 Pizarra Táctica
 [Equipos]
@@ -172,13 +168,16 @@ ESTRUCTURA DE SALIDA:
 """
 
 try:
-    print("🚀 Generando crónica (Verificando plantillas 2025/2026 en Google)...")
+    print("🚀 Generando crónica (Verificando plantillas 2025/2026)...")
     
-    # Activamos Google Search
-    tools_config = [ {"google_search": {}} ]
+    # --- AQUÍ ESTABA EL ERROR: USAMOS LA CLAVE CORRECTA AHORA ---
+    tools_config = [
+        {"google_search_retrieval": {}} 
+    ]
     
     model = genai.GenerativeModel(MODEL_NAME, tools=tools_config)
     
+    # Generar contenido
     response = model.generate_content(prompt)
     
     texto = response.text

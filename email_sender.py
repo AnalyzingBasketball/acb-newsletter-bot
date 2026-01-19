@@ -20,23 +20,44 @@ if not gmail_user or not gmail_password:
     print("❌ Error: Faltan credenciales GMAIL_USER o GMAIL_PASSWORD.")
     sys.exit(1)
 
-# --- 2. LEER INFORME (CORREGIDO: RESPETA LOS ESPACIOS) ---
+# --- 2. LEER INFORME (CORREGIDO) ---
 ARCHIVO_MD = "newsletter_borrador.md"
 if not os.path.exists(ARCHIVO_MD):
     print(f"❌ Error: No se encuentra {ARCHIVO_MD}")
     sys.exit(1)
 
-# LEEMOS EL ARCHIVO TAL CUAL (SIN BORRAR LÍNEAS EN BLANCO)
+# LEEMOS TODO EL CONTENIDO RESPETANDO ESPACIOS (Clave para listas Markdown)
 with open(ARCHIVO_MD, "r", encoding="utf-8") as f:
-    md_content = f.read()
+    raw_content = f.read()
 
-# Para el título del email, cogemos solo la primera línea
-titulo_clean = md_content.split('\n')[0].replace('#', '').strip() if md_content else "Informe ACB"
+# Dividimos en líneas pero manteniendo el formato
+lines = raw_content.split('\n')
+first_line = lines[0].strip() if lines else "Informe ACB"
+
+# LÓGICA DE ASUNTO CLICKBAIT
+if first_line.startswith("ASUNTO:"):
+    # 1. Extraemos el asunto "Clickbait"
+    asunto_texto = first_line.replace("ASUNTO:", "").strip()
+    asunto_email = f"🏀 {asunto_texto}"
+    
+    # 2. El título para LinkedIn será ese mismo asunto
+    titulo_para_linkedin = asunto_texto
+    
+    # 3. Quitamos la primera línea del cuerpo del mensaje para no repetirla
+    # Unimos el resto de líneas recuperando los saltos de línea
+    md_content = "\n".join(lines[1:])
+else:
+    # Lógica antigua (por si la IA falla y no pone ASUNTO:)
+    md_content = raw_content
+    titulo_clean = first_line.replace('#', '').strip()
+    asunto_email = f"🏀 Informe: {titulo_clean}"
+    titulo_para_linkedin = titulo_clean
 
 # --- 3. PUBLICAR EN LINKEDIN ---
 if webhook_make:
     try:
-        texto_linkedin = f"🏀 {titulo_clean}\n\n📊 Nuevo análisis disponible.\nSuscríbete: https://analyzingbasketball.wixsite.com/home/newsletter\n\n#ACB #Data"
+        # Usamos la variable corregida 'titulo_para_linkedin' para evitar errores
+        texto_linkedin = f"🏀 {titulo_para_linkedin}\n\n📊 Nuevo análisis disponible.\nSuscríbete: https://analyzingbasketball.wixsite.com/home/newsletter\n\n#ACB #Data"
         requests.post(webhook_make, json={"texto": texto_linkedin})
         print("✅ LinkedIn: Notificación enviada.")
     except Exception as e:
@@ -45,7 +66,7 @@ if webhook_make:
 # --- 4. PREPARAR CAMPAÑA ---
 print("📥 Preparando campaña de Email...")
 
-# Convertimos a HTML (Ahora sí detectará las listas gracias a los espacios)
+# Convertimos a HTML (Markdown detectará bien las listas ahora)
 html_body = markdown.markdown(md_content)
 
 plantilla_html_base = f"""
@@ -114,6 +135,7 @@ if url_suscriptores:
 
         if col_email:
             nuevos = df_subs[col_email].dropna().astype(str).unique().tolist()
+            # Filtro estricto: Debe tener @ y .
             nuevos = [e.strip() for e in nuevos if "@" in e and "." in e]
             
             count = 0
@@ -143,7 +165,7 @@ try:
             msg = MIMEMultipart()
             msg['From'] = f"Analyzing Basketball <{gmail_user}>"
             msg['To'] = email
-            msg['Subject'] = f"🏀 Informe: {titulo_clean}"
+            msg['Subject'] = asunto_email # Usamos la variable unificada
             msg.attach(MIMEText(plantilla_html_base, 'html'))
             
             server.sendmail(gmail_user, email, msg.as_string())

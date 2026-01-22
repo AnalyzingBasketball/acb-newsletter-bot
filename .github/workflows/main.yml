@@ -1,16 +1,16 @@
-name: Generar Newsletter ACB
+name: Generar Newsletter ACB Auto
 
 on:
   schedule:
-# Minuto 34, Hora 08 (UTC) -> 09:34 en España (invierno)
-    - cron: '34 8 * * 1'
-  workflow_dispatch: # Botón manual
+    # Domingos cada hora de 12:00 a 23:00 UTC
+    - cron: '30 12-23 * * 0'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  generar-contenido:
+  verificar-y-enviar:
     runs-on: ubuntu-latest
     
     steps:
@@ -25,28 +25,51 @@ jobs:
     - name: 📦 Instalar librerías
       run: pip install -r requirements.txt
 
-    - name: 📊 1. Ejecutar Scraper (Datos)
+    # --- PASO 1: EL CHECK (Lee el log.txt) ---
+    - name: 🕵️‍♀️ Verificar Estado Jornada
+      id: check
+      run: python check_status.py
+    # -----------------------------------------
+
+    - name: 📊 2. Ejecutar Scraper (Datos)
+      if: steps.check.outputs.SHOULD_RUN == 'true' || github.event_name == 'workflow_dispatch'
       run: python boxscore_ACB_headless.py
 
-    - name: 🧠 2. Ejecutar Redactor IA (Gemini)
+    - name: 🧠 3. Ejecutar Redactor IA (Gemini)
+      if: steps.check.outputs.SHOULD_RUN == 'true' || github.event_name == 'workflow_dispatch'
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: python ai_writer.py
 
-    # --- ¡¡ESTE ES EL PASO QUE TE FALTABA!! ---
-    - name: 🚀 3. Enviar Email y Redes
+    - name: 🚀 4. Enviar Email y Redes
+      if: steps.check.outputs.SHOULD_RUN == 'true' || github.event_name == 'workflow_dispatch'
       env:
         GMAIL_USER: ${{ secrets.GMAIL_USER }}
         GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
         URL_SUSCRIPTORES: ${{ secrets.URL_SUSCRIPTORES }}
         MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
       run: python email_sender.py
-    # -------------------------------------------
 
-    - name: 💾 Guardar datos históricos
+    # --- PASO 5: ACTUALIZAR EL LOG Y SUBIR ---
+    - name: 💾 Actualizar LOG y Guardar
+      if: steps.check.outputs.SHOULD_RUN == 'true'
       run: |
         git config --global user.name 'ACB Bot'
         git config --global user.email 'bot@noreply.github.com'
-        git add data/ || true
-        git commit -m "Auto: Nuevos datos procesados" || echo "Sin cambios"
+        
+        # 1. Asegurar que la carpeta data existe
+        mkdir -p data
+        
+        # 2. Escribir en el LOG (Append >>)
+        # Formato: FECHA - HORA : Texto
+        echo "$(date "+%Y-%m-%d %H:%M") : ✅ Jornada ${{ steps.check.outputs.TARGET_JORNADA }} completada y enviada." >> data/log.txt
+        
+        # 3. Mostrar el log en la consola para depurar (opcional)
+        cat data/log.txt
+        
+        # 4. Añadir cambios a Git
+        git add data/
+        
+        # 5. Commit y Push
+        git commit -m "Auto: Update log post-envío Jornada ${{ steps.check.outputs.TARGET_JORNADA }}" || echo "Sin cambios"
         git push

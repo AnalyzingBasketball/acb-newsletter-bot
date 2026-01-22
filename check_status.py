@@ -2,7 +2,7 @@ import requests
 import os
 import re
 import datetime
-import subprocess # <--- NUEVO: Para ejecutar tus otros scripts
+import subprocess 
 from bs4 import BeautifulSoup
 
 # ==============================================================================
@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 # ==============================================================================
 TEMPORADA = '2025'
 COMPETICION = '1'
-HORAS_BUFFER = 10 # Has puesto 10 horas. Si quieres 4, cámbialo aquí.
+HORAS_BUFFER = 10 
 LOG_FILE = "data/log.txt"
 BUFFER_FILE = "data/buffer_control.txt"
 
@@ -24,7 +24,7 @@ HEADERS_API = {
 }
 
 # ==============================================================================
-# ZONA 1: TUS FUNCIONES DE SCRAPING
+# ZONA 1: TUS FUNCIONES DE SCRAPING (VERIFICAR ESTADO)
 # ==============================================================================
 
 def get_last_jornada_from_log():
@@ -71,33 +71,42 @@ def is_game_finished(game_id):
     except: return False
 
 # ==============================================================================
-# ZONA 2: EL PUENTE (Aquí está el cambio clave)
+# ZONA 2: EL PUENTE (ACTUALIZAR DATOS -> ESCRIBIR -> ENVIAR)
 # ==============================================================================
 
 def ejecutar_secuencia_completa(jornada):
-    """
-    Ejecuta ai_writer.py y luego email_sender.py
-    """
-    print(f"🔄 Iniciando secuencia para Jornada {jornada}...")
+    print(f"🔄 Iniciando secuencia completa para Jornada {jornada}...")
 
-    # 1. EJECUTAR EL ESCRITOR (IA)
-    print("🤖 1. Ejecutando ai_writer.py...")
+    # --- PASO 0: ACTUALIZAR EL CSV CON TU SCRAPER ---
+    NOMBRE_SCRIPT_DATOS = "boxscore_ACB_headless.py" # <--- NOMBRE EXACTO PUESTO
+    
+    print(f"📥 0. Ejecutando {NOMBRE_SCRIPT_DATOS} para descargar estadísticas nuevas...")
     try:
-        # Ejecuta el script y captura si falla
-        resultado_ai = subprocess.run(["python", "ai_writer.py"], check=True, text=True, capture_output=True)
-        print(resultado_ai.stdout) # Muestra lo que diga la IA
+        # Ejecutamos tu scraper. Como tu scraper sobrescribe el CSV Cumulative, 
+        # al terminar tendremos los datos frescos listos para la IA.
+        subprocess.run(["python", NOMBRE_SCRIPT_DATOS], check=True, text=True)
+        print("✅ Datos actualizados correctamente.")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error crítico en ai_writer: {e.stderr}")
+        print(f"❌ Error crítico actualizando datos: {e}")
         return False
 
-    # 2. EJECUTAR EL ENVIADOR (EMAIL)
+    # --- PASO 1: EJECUTAR LA IA ---
+    print("🤖 1. Ejecutando ai_writer.py...")
+    try:
+        # La IA leerá el CSV que acabamos de actualizar en el paso 0
+        subprocess.run(["python", "ai_writer.py"], check=True, text=True)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Error crítico en ai_writer: {e}")
+        return False
+
+    # --- PASO 2: ENVIAR EMAIL ---
     print("📧 2. Ejecutando email_sender.py...")
     try:
-        resultado_email = subprocess.run(["python", "email_sender.py"], check=True, text=True, capture_output=True)
-        print(resultado_email.stdout)
+        # El sender leerá el .md generado por la IA en el paso 1
+        subprocess.run(["python", "email_sender.py"], check=True, text=True)
         return True
     except subprocess.CalledProcessError as e:
-        print(f"❌ Error crítico en email_sender: {e.stderr}")
+        print(f"❌ Error crítico en email_sender: {e}")
         return False
 
 def gestionar_buffer(jornada):
@@ -139,7 +148,7 @@ def main():
     last_sent = get_last_jornada_from_log()
     target_jornada = last_sent + 1
     
-    print(f"--- INICIO SCRIPT ---")
+    print(f"--- INICIO SCRIPT DE CONTROL ---")
     print(f"Última enviada: {last_sent}. Revisando Jornada: {target_jornada}")
 
     game_ids = get_game_ids(TEMPORADA, COMPETICION, str(target_jornada))
@@ -161,9 +170,8 @@ def main():
         tiempo_cumplido = gestionar_buffer(target_jornada)
         
         if tiempo_cumplido:
-            print("🚀 Buffer superado. Lanzando la IA y el Email...")
+            print("🚀 Buffer superado. Iniciando actualización de datos y envío...")
             
-            # LLAMAMOS A LA NUEVA FUNCIÓN QUE EJECUTA LOS OTROS ARCHIVOS
             exito = ejecutar_secuencia_completa(target_jornada)
             
             if exito:

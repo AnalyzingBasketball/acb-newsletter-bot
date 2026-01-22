@@ -1,15 +1,15 @@
-name: Check Status ACB
+name: Auto ACB Newsletter
 
 on:
   schedule:
     - cron: '0 * * * *' # Ejecutar cada hora en punto
-  workflow_dispatch: # Permite ejecutar manual
+  workflow_dispatch: # Botón manual para probar
 
 permissions:
-  contents: write
+  contents: write # IMPORTANTE: Para guardar el log y el buffer
 
 jobs:
-  check-and-process:
+  run-process:
     runs-on: ubuntu-latest
     
     steps:
@@ -22,22 +22,25 @@ jobs:
         python-version: '3.9'
 
     - name: Install dependencies
-      run: |
-        pip install requests beautifulsoup4
+      run: pip install -r requirements.txt
 
-    - name: Run script
+    - name: Ejecutar Check Status
       env:
-        # Si tu funcion enviar_newsletter necesita contraseñas, ponlas aquí
-        EMAIL_USER: ${{ secrets.EMAIL_USER }} 
-        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        # Pasamos TODOS los secretos necesarios porque check_status 
+        # llamará a ai_writer y email_sender, y ellos necesitan estas claves.
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GMAIL_USER: ${{ secrets.GMAIL_USER }}
+        GMAIL_PASSWORD: ${{ secrets.GMAIL_PASSWORD }}
+        URL_SUSCRIPTORES: ${{ secrets.URL_SUSCRIPTORES }}
+        MAKE_WEBHOOK_URL: ${{ secrets.MAKE_WEBHOOK_URL }}
       run: python check_status.py
 
-    - name: Commit & Push changes
+    - name: Guardar memoria (Commit changes)
       run: |
         git config --global user.name 'ACB Bot'
         git config --global user.email 'bot@noreply.github.com'
-        # Añadimos LOG y el archivo de BUFFER (importante para la cuenta atrás)
+        # Guardamos el log y el control del buffer
         git add data/log.txt data/buffer_control.txt
-        # Commit solo si hay cambios, si no, no falla
-        git commit -m "Auto: Update status J${{ github.run_number }}" || exit 0
+        # Si no hay cambios (no se envió nada), no da error
+        git commit -m "Auto: Update status" || exit 0
         git push

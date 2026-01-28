@@ -1,12 +1,14 @@
 name: Auto ACB Newsletter
 
 on:
+  push:                  # <--- AÑADE ESTO
+    branches: [ main ]   # <--- AÑADE ESTO
   schedule:
-    - cron: '0 * * * *' # Cada hora en punto
-  workflow_dispatch: # Botón manual para probar
+    - cron: '15 * * * *' # <--- CAMBIA EL 0 POR UN 15
+  workflow_dispatch:
 
 permissions:
-  contents: write # IMPORTANTE
+  contents: write
 
 jobs:
   run-process:

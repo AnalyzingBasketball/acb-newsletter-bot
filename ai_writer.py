@@ -494,25 +494,26 @@ TENDENCIAS:
 {txt_trends}
 
 INSTRUCCIONES:
-1. **PRIMERA LÍNEA OBLIGATORIA**: Escribe una frase corta (máx 50 caracteres), impactante y estilo "clickbait" que resuma lo más loco de la jornada. EMPIEZA LA LÍNEA CON "ASUNTO:".
-2. **RESPETA LOS NOMBRES**: Úsalos tal cual aparecen arriba.
-3. **NARRATIVA**: Crónica vibrante.
+1. **REGLA DE ORO DEL TONO:** Escribe SIEMPRE de "tú", NUNCA de "usted". Dirígete al lector de forma directa, cercana y apasionada por el baloncesto. Escribe como si fueras un colega contándole el resumen de la jornada a otro loco del basket tomando un café. Usa un tono vibrante y coloquial, pero profesional (cercano, pero sin exceso de confianza ni palabras malsonantes).
+2. **PRIMERA LÍNEA OBLIGATORIA**: Escribe una frase corta (máx 50 caracteres), impactante y estilo "clickbait" que resuma lo más loco de la jornada. EMPIEZA LA LÍNEA CON "ASUNTO:".
+3. **RESPETA LOS NOMBRES**: Úsalos tal cual aparecen arriba.
+4. **NARRATIVA**: Crónica con ritmo, que enganche desde la primera línea. Involucra al lector ("Fíjate en lo que hizo...", "¿Has visto el partido de...?").
 
 ESTRUCTURA DE SALIDA (ESTRICTA):
 ASUNTO: [Aquí tu frase clickbait increíble]
 
 ## 🏀 Informe ACB: {ultima_jornada_label}
 
-### 👑 MVP
-[Análisis del MVP]
+### 👑 El MVP
+[Análisis del MVP o MVPs, hablándole de tú al lector]
 
 ### 🚀 Radar de Eficiencia
-[Análisis de destacados y contexto]
+[Análisis de destacados y contexto, manteniendo el tono cercano]
 
 ### 🧠 Pizarra Táctica
-[Análisis de equipos]
+[Análisis de equipos, explicando los datos de forma atractiva]
 
-### 🔥 Tendencias (Últimas Jornadas)
+### 🔥 Quién está On Fire (Últimas Jornadas)
 {txt_trends}
 """
 

@@ -72,14 +72,14 @@ plantilla_html_base = f"""
         </div>
 
         <div style='background-color: #ffffff; padding: 20px; text-align: center; padding-bottom: 40px;'>
-            <a href="https://analyzingbasketball.wixsite.com/home/newsletter" 
+            <a href="https://www.analyzingbasketball.com/" 
                style='display: inline-block; background-color: #000000; color: #ffffff; padding: 14px 30px; text-decoration: none; font-weight: bold; font-size: 14px; letter-spacing: 1px; border-radius: 4px;'>
                 HOME
             </a>
         </div>
 
         <div style='background-color: #f9f9f9; padding: 30px; text-align: center; border-top: 1px solid #eeeeee;'>
-            <a href='https://analyzingbasketball.wixsite.com/home' style='color: #000000; font-weight: bold; text-decoration: none; font-size: 14px; text-transform: uppercase;'>Analyzing Basketball</a>
+            <a href='https://www.analyzingbasketball.com/' style='color: #000000; font-weight: bold; text-decoration: none; font-size: 14px; text-transform: uppercase;'>Analyzing Basketball</a>
             <p style='color: #999999; font-size: 11px; margin-top: 10px;'>&copy; 2026 AB</p>
             
             <p style='margin-top: 20px;'>

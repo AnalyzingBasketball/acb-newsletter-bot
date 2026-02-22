@@ -6,12 +6,12 @@ import re
 import numpy as np
 
 # ==============================================================================
-# 1. CONFIGURACIÓN
+# 1. CONFIGURACIÓN - LIGA REGULAR ACB
 # ==============================================================================
 MODEL_NAME = "gemini-2.5-flash"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
-# Mapa de Equipos
+# Mapa de Equipos (Los 18 de la Liga Endesa)
 TEAM_MAP = {
     'UNI': 'Unicaja', 'SBB': 'Bilbao Basket', 'BUR': 'San Pablo Burgos', 'GIR': 'Bàsquet Girona',
     'TEN': 'La Laguna Tenerife', 'MAN': 'BAXI Manresa', 'LLE': 'Hiopos Lleida', 'BRE': 'Río Breogán',
@@ -20,7 +20,7 @@ TEAM_MAP = {
     'VBC': 'Valencia Basket', 'BAR': 'Barça'
 }
 
-# Mapa de Entrenadores (Temporada 2025/2026 - ACTUALIZADO OFICIAL)
+# Mapa de Entrenadores (Temporada 2025/2026)
 COACH_MAP = {
     'BAR': 'Xavi Pascual', 'RMB': 'Sergio Scariolo', 'UNI': 'Ibon Navarro',
     'BKN': 'Paolo Galbiati', 'VBC': 'Pedro Martínez', 'UCM': 'Sito Alonso',
@@ -31,7 +31,7 @@ COACH_MAP = {
 }
 
 # ==============================================================================
-# 2. DICCIONARIO MAESTRO DE JUGADORES (Temp. 2025/26)
+# 2. DICCIONARIO MAESTRO DE JUGADORES (TODOS LOS EQUIPOS ACB)
 # ==============================================================================
 CORRECCIONES_VIP = {
     # --- BARÇA (BAR) ---
@@ -69,7 +69,7 @@ CORRECCIONES_VIP = {
     # --- UNICAJA (UNI) ---
     "A. Butajevas": "Arturas Butajevas", "A. Díaz": "Alberto Díaz", "A. Rubit": "Augustine Rubit", "C. Audige": "Chase Audige", "C. Duarte": "Chris Duarte", "D. Kravish": "David Kravish", "E. Sulejmanovic": "Emir Sulejmanovic", "J. Barreiro": "Jonathan Barreiro", "J. Webb": "James Webb III", "K. Perry": "Kendrick Perry", "K. Tillie": "Killian Tillie", "N. Djedovic": "Nihad Djedovic", "O. Balcerowski": "Olek Balcerowski", "T. Kalinoski": "Tyler Kalinoski", "T. Pérez": "Tyson Pérez", "X. Castañeda": "Xavier Castañeda",
     # --- VALENCIA BASKET (VBC) ---
-    "B. Badio": "Brancou Badio", "B. Key": "Braxton Key", "D. Thompson": "Darius Thompson", "I. Iroegbu": "Ike Iroegbu", "I. Nogués": "Isaac Nogués", "J. Montero": "Jean Montero", "J. Pradilla": "Jaime Pradilla", "J. Puerto": "Josep Puerto", "K. Taylor": "Kameron Taylor", "López-Arostegui": "Xabi López-Arostegui", "M. Costello": "Matt Costello", "N. Reuvers": "Nate Reuvers", "N. Sako": "Neal Sako", "O. Moore": "Omari Moore", "S. de Larrea": "Sergio de Larrea", "Y. Sima": "Yankuba Sima",
+    "B. Badio": "Brancou Badio", "B. Key": "Braxton Key", "D. Thompson": "Darius Thompson", "I. Iroegbu": "Ike Iroegbu", "I. Nogués": "Isaac Nogués", "J. Montero": "Jean Montero", "J. Pradilla": "Jaime Pradilla", "J. Puerto": "Josep Puerto", "K. Taylor": "Kameron Taylor", "López-Arostegui": "Xabi López-Arostegui", "M. Costello": "Matt Costello", "N. Reuvers": "Nate Reuvers", "N. Sako": "Neal Sako", "O. Moore": "Omari Moore", "S. de Larrea": "Sergio de Larrea", "Y. Sima": "Yankuba Sima"
 }
 
 # ==============================================================================
@@ -104,13 +104,13 @@ def clean_name(name_raw):
     return CORRECCIONES_VIP.get(name_raw, name_raw)
 
 # ==============================================================================
-# 4. CARGA DE DATOS
+# 4. CARGA DE DATOS Y EXTRACCIÓN DE LA JORNADA
 # ==============================================================================
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key: guardar_salida("❌ Error: Falta GEMINI_API_KEY.")
 genai.configure(api_key=api_key)
 
-if not os.path.exists(FILE_PATH): guardar_salida("❌ No hay CSV.")
+if not os.path.exists(FILE_PATH): guardar_salida(f"❌ No hay CSV en {FILE_PATH}.")
 df = pd.read_csv(FILE_PATH)
 
 cols_num = ['VAL', 'PTS', 'Reb_T', 'AST', 'Win', 'Game_Poss', 'TO', 'TS%', 'USG%']
@@ -118,6 +118,7 @@ for col in cols_num:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
+# Buscamos la última jornada registrada
 jornadas_unicas = sorted(df['Week'].unique(), key=extraer_numero_jornada)
 ultima_jornada_label = jornadas_unicas[-1]
 df_week = df[df['Week'] == ultima_jornada_label]
@@ -125,34 +126,34 @@ df_week = df[df['Week'] == ultima_jornada_label]
 print(f"🤖 Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
-# 5. PREPARACIÓN DE DATOS
+# 5. PREPARACIÓN DE DATOS (Top Performers, Equipos, Tendencias)
 # ==============================================================================
 
-# A. MVP (SOPORTA MÚLTIPLES MVPs)
+# A. MEJORES JUGADORES (SOPORTA EMPATES)
 ganadores = df_week[df_week['Win'] == 1]
 pool = ganadores if not ganadores.empty else df_week
 
 max_val = pool['VAL'].max()
-mvps = pool[pool['VAL'] == max_val]
+mejores = pool[pool['VAL'] == max_val]
 
-txt_mvp = ""
-mvp_ids = []
+txt_mejores = ""
+mejores_ids = []
 
-for _, mvp_row in mvps.iterrows():
-    mvp_name = clean_name(mvp_row['Name'])
-    txt_mvp += (f"- {mvp_name} ({get_team_name(mvp_row['Team'])}): {b(mvp_row['VAL'])} VAL, "
-                f"{b(mvp_row['PTS'])} PTS (TS%: {b(mvp_row['TS%'], 1, True)}), {b(mvp_row['Reb_T'])} REB.\n")
-    mvp_ids.append(mvp_row['PlayerID']) 
+for _, row in mejores.iterrows():
+    m_name = clean_name(row['Name'])
+    txt_mejores += (f"- {m_name} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL, "
+                f"{b(row['PTS'])} PTS (TS%: {b(row['TS%'], 1, True)}), {b(row['Reb_T'])} REB.\n")
+    mejores_ids.append(row['PlayerID'])
 
-# B. DESTACADOS
-resto = df_week[~df_week['PlayerID'].isin(mvp_ids)]
+# B. DESTACADOS SECUNDARIOS
+resto = df_week[~df_week['PlayerID'].isin(mejores_ids)]
 top_rest = resto.sort_values('VAL', ascending=False).head(3)
 txt_rest = ""
 for _, row in top_rest.iterrows():
     r_name = clean_name(row['Name'])
     txt_rest += f"- {r_name} ({get_team_name(row['Team'])}): {b(row['VAL'])} VAL.\n"
 
-# C. EQUIPOS (Inyectando los entrenadores EXACTOS del COACH_MAP)
+# C. EQUIPOS DE LA JORNADA
 team_agg = df_week.groupby('Team').agg({
     'PTS': 'sum', 'Game_Poss': 'mean', 'Reb_T': 'sum', 'AST': 'sum', 'TO': 'sum'
 }).reset_index()
@@ -170,19 +171,7 @@ txt_teams = f"""
 - Control: {get_team_name(most_careful['Team'])} (Entrenador: {COACH_MAP.get(most_careful['Team'], 'su técnico')}) con {b(most_careful['TO_Ratio'], 1)} perdidas/100.
 """
 
-# D. CONTEXTO
-lider_ts = df_week[df_week['PTS'] >= 10].sort_values('TS%', ascending=False).iloc[0]
-lider_usg = df_week.sort_values('USG%', ascending=False).iloc[0]
-
-ts_name = clean_name(lider_ts['Name'])
-usg_name = clean_name(lider_usg['Name'])
-
-txt_context = f"""
-- Francotirador (TS%): {ts_name} ({b(lider_ts['TS%'], 1, True)}).
-- Dominador (USG%): {usg_name} ({b(lider_usg['USG%'], 1, True)} de uso).
-"""
-
-# E. TENDENCIAS
+# D. TENDENCIAS (Últimas 3 Jornadas)
 txt_trends = ""
 if len(jornadas_unicas) >= 1:
     last_3 = jornadas_unicas[-3:]
@@ -195,55 +184,68 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS, {b(row['AST'], 1)} AST.\n")
 
 # ==============================================================================
-# 6. GENERACIÓN IA (MODO EDITORIAL PREMIUM A PRUEBA DE BALAS)
+# 6. INSTRUCCIONES DE BÚSQUEDA WEB PARA LA LIGA REGULAR
+# ==============================================================================
+instrucciones_especificas = f"""
+INSTRUCCIONES DE BÚSQUEDA WEB (USO OBLIGATORIO DE GOOGLE SEARCH):
+1. CONTEXTO DE LA CLASIFICACIÓN Y LA JORNADA: Busca "Noticias resumen {ultima_jornada_label} Liga Endesa ACB 2026". Averigua si ha habido sorpresas, victorias clave a domicilio, o movimientos críticos en la clasificación (lucha por entrar en Playoffs, cabeza de serie, o escapar del descenso).
+2. EL MVP OFICIAL: Busca "MVP {ultima_jornada_label} Liga Endesa ACB 2026" para confirmar quién se llevó el galardón oficial y crúzalo con los datos de "Top Performers" que tienes más abajo.
+3. JUGADAS DECISIVAS: Averigua a través de la búsqueda si hubo algún tiro sobre la bocina, prórrogas o actuaciones clave en el último cuarto e intégralas sutilmente en la crónica.
+"""
+
+# ==============================================================================
+# 7. GENERACIÓN IA CON GOOGLE SEARCH Y REGLAS ESTRICTAS
 # ==============================================================================
 
 prompt = f"""
 Actúa como un analista de baloncesto profesional y periodista deportivo de élite.
-Vas a escribir la newsletter 'Analyzing Basketball' sobre la Liga Endesa (ACB). Tu objetivo es convertir datos estadísticos avanzados en una crónica narrativa de alto nivel.
+Estás redactando el informe 'Analyzing Basketball' para la Liga Regular ACB.
 
-DATOS DE LA JORNADA (Inamovibles):
-MVP: {txt_mvp}
+FASE ACTUAL: {ultima_jornada_label}
+
+DATOS DE LOS JUGADORES (Top Performers de la Jornada):
+TOP PERFORMERS:
+{txt_mejores}
 DESTACADOS:
 {txt_rest}
-EQUIPOS (Eficiencia y Entrenadores):
+
+DATOS DE LOS EQUIPOS (Eficiencia de la Jornada):
 {txt_teams}
-CONTEXTO:
-{txt_context}
-TENDENCIAS (Últimas Jornadas):
+
+ESTADO DE FORMA (Promedios últimas 3 jornadas):
 {txt_trends}
 
-REGLAS DE ESTILO (¡MUY ESTRICTAS!):
-1. TONO Y AUDIENCIA: Profesional, analítico y objetivo. Eres un periodista deportivo experto escribiendo para una audiencia muy entendida en baloncesto en ESPAÑA.
-2. IDIOMA (ESPAÑOL DE ESPAÑA): Tienes prohibido usar vocabulario latinoamericano. NUNCA uses la palabra "volcada" (usa "mate"), ni "lanzamiento de personal" (usa "tiros libres"), ni "duela" (usa "parqué" o "cancha"). Escribe en castellano peninsular estricto.
-3. ENTRENADORES Y ALUCINACIONES: En los DATOS DE LOS EQUIPOS se incluye el nombre de sus entrenadores actuales. Úsalos para enriquecer el análisis táctico (ej: "la pizarra de Sergio Scariolo", "los sistemas de Pedro Martínez"). ESTÁ ESTRICTAMENTE PROHIBIDO inventar nombres de entrenadores o datos que no aparezcan en la información proporcionada.
-4. CERO EMOJIS (CRÍTICO): Está TOTALMENTE PROHIBIDO usar emojis en cualquier parte del texto. NO PUEDES USAR EMOJIS EN EL ASUNTO. NO PUEDES USAR EMOJIS EN LOS TÍTULOS. NO PUEDES USAR EMOJIS EN EL CUERPO DEL TEXTO. Un solo emoji arruinará el formato profesional de la newsletter.
-5. CERO COLEGUEO O DRAMA: No hables al lector en segunda persona ("sabes", "fíjate"). Usa la tercera persona ("se observa", "destaca"). Evita el dramatismo barato ("a vida o muerte") y las preguntas retóricas.
-6. VOZ ACTIVA Y RITMO: Escribe siempre en voz activa ("Campazzo lideró...", no "El equipo fue liderado por Campazzo"). Alterna frases largas de análisis con oraciones cortas y contundentes para dar un ritmo de lectura natural y periodístico.
-7. VOCABULARIO DE PARQUÉ: Usa terminología técnica real de baloncesto con naturalidad (spacing, pick & roll, mismatch, IQ, colapso defensivo, tiro tras bote, generación de ventajas, lado débil).
+{instrucciones_especificas}
 
-ESTRUCTURA EXACTA DE SALIDA:
+REGLAS DE ESTILO (¡MUY ESTRICTAS Y DE OBLIGADO CUMPLIMIENTO!):
+1. TONO Y AUDIENCIA: Profesional, analítico y estrictamente periodístico. Escribes para expertos en baloncesto en ESPAÑA. Transmite la dificultad de la maratón de la liga regular (gestión de cansancio, dificultad de ganar a domicilio, presión por la clasificación).
+2. IDIOMA (ESPAÑOL DE ESPAÑA PURO): Tienes TERMINANTEMENTE PROHIBIDO usar vocabulario latinoamericano o anglicismos innecesarios. Usa "mate" (nunca volcada), "parqué/cancha" (nunca duela), "clubes" (nunca franquicias) y "tiros libres" (nunca lanzamiento de personal).
+3. CERO EMOJIS (CRÍTICO): Está TOTALMENTE PROHIBIDO usar emojis en cualquier parte del texto. NI UNO SOLO en el asunto, NI en los títulos, NI en el cuerpo.
+4. TRATO AL LECTOR (IMPERSONAL): NO te dirijas al lector bajo ningún concepto. Tienes PROHIBIDO usar "tú", PROHIBIDO usar "vosotros" y PROHIBIDO tratar de "usted". Escribe exclusivamente en tercera persona o usando formas impersonales ("se observa", "el equipo logró", "destaca"). Cero preguntas retóricas.
+5. ENTRENADORES Y ALUCINACIONES: Usa estrictamente los nombres de los entrenadores proporcionados en los datos y limítate a analizar lo ocurrido en la cancha.
+6. RITMO Y VOZ ACTIVA: Emplea un tono de análisis sosegado pero contundente. Escribe en voz activa. Evita recursos literarios exagerados; que los datos sostengan el relato.
+7. VOCABULARIO DE PARQUÉ ACB: Usa terminología técnica real de baloncesto FIBA con naturalidad (spacing, pick & roll central, mismatch, IQ, colapso defensivo, tiro tras bote, generación de ventajas, lado débil, extrapass).
 
-ASUNTO: [Escribe aquí un asunto atractivo, muy profesional, basado en el dato más destacado y ESTRICTAMENTE SIN NINGÚN EMOJI]
+ESTRUCTURA DE SALIDA (ESTRICTA):
+ASUNTO: [Escribe aquí un asunto analítico, muy profesional, basado en lo ocurrido en la {ultima_jornada_label}. ESTRICTAMENTE SIN NINGÚN EMOJI]
 
-## Informe ACB: {ultima_jornada_label}
+## Informe Liga Endesa: {ultima_jornada_label}
 
-### El MVP
-[Crónica narrativa del MVP o MVPs, basándote estrictamente en sus métricas y aportando contexto cualitativo de forma sobria y analítica. RECUERDA: Español de España puro.]
+### MVP y Puntos Clave de la Jornada
+[Redacta la crónica principal basándote en tu búsqueda de Google (MVP real, movimientos en la tabla, victorias a domicilio). Cruza la narrativa de la liga regular con las estadísticas del TOP PERFORMER aportado en los datos.]
 
-### Radar de Eficiencia
-[Análisis de los destacados y el contexto (TS%, USG%). Mantén un tono analítico y periodístico]
+### Radar de Eficiencia y Pizarra Táctica
+[Analiza el rendimiento de los equipos de esta semana. Usa los datos de Puntos por 100 posesiones, Asistencias o Pérdidas y menciona a sus entrenadores. Explica cómo la gestión de las posesiones y la fluidez definieron los resultados.]
 
-### Pizarra Táctica
-[Análisis de los equipos: Ataque, Fluidez, Control y menciona a sus entrenadores reales proporcionados. Traduce la eficiencia ofensiva y el ratio de asistencias/pérdidas a conceptos de juego real de forma técnica]
-
-### Tendencias (Últimas Jornadas)
+### Jugadores en Racha (Últimas 3 Jornadas)
+[Enumera a los 5 jugadores con mayor valoración reciente en este formato exacto, usando guiones:]
 {txt_trends}
 """
 
 try:
-    print("🚀 Generando crónica (Modo Editorial Premium)...")
-    model = genai.GenerativeModel(MODEL_NAME)
+    print(f"🚀 Generando crónica premium para {ultima_jornada_label} con Grounding Search...")
+    # Ejecutamos el modelo llamando a la herramienta de búsqueda de Google
+    model = genai.GenerativeModel(model_name=MODEL_NAME, tools="google_search_retrieval")
     response = model.generate_content(prompt)
     texto = response.text.replace(":\n-", ":\n\n-")
     guardar_salida(texto)

@@ -1,14 +1,14 @@
-ASUNTO: Análisis Jornada 21 ACB: La Irrupción de Forrest y la Excelencia Táctica en la Liga
+ASUNTO: Análisis Jornada 21: El impacto de Forrest y la eficiencia táctica en la Liga Endesa
 
 ## Informe Liga Endesa: Jornada 21
 
 ### MVP y Puntos Clave de la Jornada
-Trent Forrest (Baskonia) se erige como el MVP de la Jornada 21 con una valoración de **30**, liderando la tabla de rendimiento individual. Su actuación, que incluyó 18 puntos con un TS% del **73.3%** y 5 rebotes, demuestra una eficiencia ofensiva sobresaliente, vital en el exigente calendario de la Liga Endesa. Esta consistencia en el rendimiento individual es crucial para que Baskonia mantenga sus aspiraciones en la larga liga regular.
+Trent Forrest del Baskonia se erige como el MVP de la Jornada 21 con 30 de valoración. Su rendimiento, con 18 puntos (73.3% TS%) y 5 rebotes, demuestra una eficiencia ofensiva sobresaliente, vital en el exigente calendario de la Liga Endesa.
 
-En el parqué, Forrest capitalizó el *pick & roll central* para generar ventajas, mostrando un *IQ* elevado en la lectura de las defensas. Un *mate* tras penetración, superando el primer muro defensivo, ejemplifica su impacto ofensivo. Además, su capacidad para asegurar rebotes clave en ambos aros, como un *rebote ofensivo* que culminó en canasta fácil, fue decisiva para su equipo.
+Esta actuación resulta clave para un equipo como Baskonia, que necesita sumar en cada cancha para consolidar su posición en la élite. Forrest fue determinante generando ventajas desde el uno contra uno, explotando mismatches en el poste bajo o finalizando con autoridad tras penetraciones que colapsaron la defensa rival. Un mate crucial tras un corte sin balón en el lado débil ilustra su lectura del spacing y su IQ para encontrar la mejor opción ofensiva.
 
 ### Radar de Eficiencia y Pizarra Táctica
-La Jornada 21 subraya la diversidad de ritmos tácticos exitosos en la ACB. El Barça de Xavi Pascual impone un ritmo ofensivo inigualable, con 142.1 puntos por cada 100 posesiones, reflejo de una ejecución precisa y un excelente *spacing*. En contraste, la fluidez colectiva del Joventut de Dani Miret, con 36.1 asistencias por cada 100 posesiones, dicta un tempo de juego basado en la constante generación de ventajas para el compañero. UCAM Murcia, bajo Sito Alonso, prioriza el control con apenas 6.1 pérdidas por cada 100 posesiones, minimizando errores y maximizando la eficiencia de cada posesión.
+El Barça de Xavi Pascual mantiene su hegemonía ofensiva con 142.1 puntos por cada 100 posesiones, marcando un ritmo elevadísimo. La fluidez en la circulación de balón del Joventut de Dani Miret, con 36.1 asistencias por cada 100 posesiones, subraya su capacidad para generar juego coral y ventajas desde el lado débil. Mientras, la UCAM Murcia de Sito Alonso exhibe un control excepcional, minimizando pérdidas a 6.1 por cada 100 posesiones, lo que permite dictar el tempo del encuentro y mantener la posesión con alta efectividad.
 
 ### Jugadores en Racha (Últimas 3 Jornadas)
 - Mario Hezonja (RMB): **35.0** VAL, **26.0** PTS, **2.0** AST.

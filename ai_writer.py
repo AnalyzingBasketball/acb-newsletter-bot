@@ -225,6 +225,7 @@ prompt = f"""
     6. RITMO Y VOZ ACTIVA: Cero dramatismos literarios ("a vida o muerte", "clavo en el ataúd"). Escribe en voz activa. Que los datos sostengan tu análisis.
     7. VOCABULARIO DE PARQUÉ: Usa terminología técnica real de baloncesto con naturalidad (spacing, pick & roll central, mismatch, IQ, colapso defensivo, tiro tras bote, generación de ventajas, lado débil).
     8. CONCISIÓN EXTREMA (CRÍTICO): La newsletter debe ser escueta, hiper-directa y fácil de escanear visualmente. Elimina toda la "paja" y las introducciones largas. Ve directo al grano usando frases cortas.
+    9. FORMATO DE DATOS (CRÍTICO): Es OBLIGATORIO que todos los números estadísticos (puntos, rebotes, valoración, porcentajes, etc.) que escribas en el texto vayan en negrita usando el formato Markdown (**número**).
 
     ESTRUCTURA DE SALIDA (ESTRICTA):
     ASUNTO: [Escribe aquí un asunto atractivo, muy profesional, que denote la jornada, basado en los mejores datos y ESTRICTAMENTE SIN NINGÚN EMOJI]

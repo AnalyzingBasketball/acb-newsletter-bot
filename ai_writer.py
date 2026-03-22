@@ -126,12 +126,11 @@ df_week = df[df['Week'] == ultima_jornada_label]
 print(f"Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
-# 5. PREPARACIÓN DE DATOS (Top Performers, Equipos, Tendencias)
+# 5. PREPARACIÓN DE DATOS
 # ==============================================================================
 
-# A. CO-MVP: buscamos el máximo VAL en TODA la jornada (ganadores y perdedores)
-# Si el empate se da entre jugadores de equipos distintos (uno gana, otro pierde),
-# el filtro de ganadores romperia la detección. Por eso buscamos en df_week completo.
+# A. CO-MVP: buscamos el máximo VAL en TODA la jornada (ganadores y perdedores).
+# Buscar solo en ganadores rompería la detección si los co-MVPs son de equipos distintos.
 max_val_jornada = df_week['VAL'].max()
 mejores = df_week[df_week['VAL'] == max_val_jornada]
 num_mvps = len(mejores)
@@ -147,7 +146,7 @@ for _, row in mejores.iterrows():
                     f"{b(row['AST'])} AST, USG%: {b(row['USG%'], 1, True)}.\n")
     mejores_ids.append(row['PlayerID'])
 
-# B. DESTACADOS SECUNDARIOS (excluye a los MVP(s))
+# B. DESTACADOS SECUNDARIOS
 resto = df_week[~df_week['PlayerID'].isin(mejores_ids)]
 top_rest = resto.sort_values('VAL', ascending=False).head(3)
 txt_rest = ""
@@ -192,15 +191,17 @@ if len(jornadas_unicas) >= 1:
 
 if num_mvps > 1:
     mvp_instruccion = (f"JORNADA CON CO-MVPs: hay {num_mvps} jugadores empatados en la máxima "
-                       f"valoración ({int(max_val_jornada)} VAL). Tratálos como co-MVPs con IGUAL "
+                       f"valoración ({int(max_val_jornada)} VAL). Trátalos como co-MVPs con IGUAL "
                        f"protagonismo. No elijas uno principal. Pueden ser de equipos distintos "
-                       f"y hasta de equipos que perdieron, eso es parte del interés.")
+                       f"y hasta de equipos que perdieron, eso forma parte del interés.")
 else:
-    mvp_instruccion = "MVP Único: un solo jugador lidera la valoración de la jornada."
+    mvp_instruccion = "MVP único: un solo jugador lidera la valoración de la jornada."
 
-prompt = f"""Eres el redactor de la newsletter 'Analyzing Basketball', especializada en análisis 
-de la Liga Endesa (ACB). Tu newsletter la leen aficionados con alto nivel de conocimiento 
-de baloncesto. Tu voz es directa, concisa y técnica, sin florituras.
+prompt = f"""Eres el autor de la newsletter 'Analyzing Basketball' sobre la Liga Endesa (ACB).
+Tu perfil: analista con criterio propio, que domina los números pero escribe para ser leído,
+no para impresionar. Tono formal pero sin rigidez — como alguien que sabe de lo que habla
+y no necesita demostrarlo con palabras rebuscadas. Directo, con alguna opinión cuando los
+datos lo justifican, sin dramatismo ni relleno.
 
 JORNADA: {ultima_jornada_label}
 {mvp_instruccion}
@@ -214,59 +215,64 @@ JORNADA: {ultima_jornada_label}
 --- FORMA RECIENTE (3 jornadas) ---
 {txt_trends}
 
-=== EJEMPLO DE ESTILO (imita este tono exacto, no el contenido) ===
-ASUNTO: Shermadini y Montero comparten el liderato de una jornada sin dominator claro
+=== EJEMPLO DE ESTILO — imita el tono, no el contenido ===
 
-## Informe Liga Endesa: Jornada 18
+ASUNTO: Bozic lidera una jornada disputada con 33 de valoración desde la derrota
+
+## Informe Liga Endesa: Jornada 22
 
 ### MVP y Puntos Clave
-Dos jugadores, un mismo techo. Giorgi Shermadini y Jean Montero acabaron la jornada con 
-**28** VAL cada uno, liderando sus respectivos equipos en victorias. El pivot georgiano 
-terminó con **22** puntos y **12** rebotes, un 71.4% de TS% que refleja cómo aprovechó 
-cada tiro cerca del aro. Montero, en cambio, tiró menos pero repartió más: **18** puntos 
-y **7** asistencias con un USG% del 28.3% que apunta a que Valencia le demandó mucho 
-balón en los momentos clave.
 
-Ambas actuaciones llegaron en partidos que sus equipos necesitaban ganar. Tenerife sigue 
-colgado en zona de copas; Valencia recorta terreno en la parte media de la tabla.
+Luka Bozic firmó **33** de valoración en la derrota del Covirán, la mejor cifra individual
+de la jornada. **20** puntos con un 67.4% en TS% y **13** rebotes para un jugador que lleva
+semanas siendo el único faro ofensivo de su equipo. El problema es que no fue suficiente:
+cuando un interior tiene que cargar con ese USG%, algo no funciona en el reparto.
+
+Por el lado de los ganadores, Trent Forrest y Jean Montero completaron noches sólidas sin
+necesitar cifras desorbitadas. **18** y **17** puntos respectivamente, con ratios AST/TO que
+sugieren que ambos tomaron buenas decisiones con el balón. Eso, en la ACB, vale.
 
 ### Radar de Eficiencia
-- Unicaja (Ibon Navarro): **134.2** pts/100 pos. El espaciado y la ejecución siguen siendo 
-el mejor ataque de la competición por margen.
-- Bilbao Basket (Jaume Ponsarnau): **31.8** ast/100 pos. El balón se mueve, pero el ratio 
-AST/TO sugiere que algunos de esos pases son forzados.
-- Tenerife (Txus Vidorreta): **8.2** pérdidas/100 pos. El equipo más cuidadoso con el 
-balón de la jornada.
+
+- Unicaja (Ibon Navarro): **137.1** pts/100 pos. Siguen siendo el equipo más difícil de
+  defender de la liga. El spacing funciona y los datos de AST apuntan a que los tiros
+  llegan bien generados.
+- Bilbao Basket (Jaume Ponsarnau): **33.2** ast/100 pos. Mucho movimiento de balón,
+  aunque habría que ver si esa fluidez se convierte en tiros de calidad.
+- Tenerife (Txus Vidorreta): **8.8** pérdidas/100 pos. El equipo que menos regala
+  posesiones. Con Shermadini en forma, esa disciplina se nota en el marcador.
 
 ### En Racha (3 jornadas)
 - Trent Forrest (BKN): **26.7** VAL, **16.3** PTS, **4.7** AST, TS%: **58.2%**.
 - Giorgi Shermadini (TEN): **24.5** VAL, **21.0** PTS, **0.5** AST, TS%: **69.1%**.
+
 === FIN EJEMPLO ===
 
-REGLAS ABSOLUTAS (incumplirlas invalida el texto):
-1. LONGITUD: máximo 350 palabras en el cuerpo (no cuentan bullet points de "En Racha").
-2. ARRANQUE: primera frase = dato más importante. Sin introducción genérica.
-3. SIN CIERRE: no escribas frases de despedida. El texto termina con el último dato.
-4. SIN EMOJIS: ni en asunto, ni en títulos, ni en cuerpo.
+REGLAS ABSOLUTAS — incumplirlas invalida el texto:
+1. LONGITUD: máximo 350 palabras en el cuerpo (los bullets de "En Racha" no cuentan).
+2. ARRANQUE: primera frase = dato concreto. Sin intros genéricas del tipo "Una nueva jornada...".
+3. SIN CIERRE: nada de "Hasta la próxima" ni similares. El texto acaba con el último dato o idea.
+4. SIN EMOJIS: en ninguna parte del texto.
 5. IMPERSONAL: sin "tú", "vosotros", "usted". Tercera persona o formas impersonales.
 6. ESPAÑOL DE ESPAÑA: "mate" no volcada, "cancha/parqué" no duela, "tiros libres" no lanzamiento personal.
-7. INFERENCIA TÁCTICA: sin visión ni play-by-play. Cualquier lectura táctica debe ir 
-   enmarcada: "el USG% sugiere...", "la ratio AST/TO apunta a...", "con ese ORTG, el sistema 
-   de [entrenador] parece...". PROHIBIDO narrar acciones reales ("en el minuto 34...").
-8. ENTRENADORES: solo los nombres de los datos. No inventes.
-9. DATOS EN NEGRITA: todos los números estadísticos en **negrita** Markdown.
-10. VOCABULARIO PROHIBIDO: "créditos de valoración", "maestría", "denota", "subraya", 
-    "exhibe", "estelar", "galvaniza", "crisol", "abanico", "diametralmente", "en definitiva",
-    "sin lugar a dudas", "no es casualidad". Usa lenguaje directo y concreto.
+7. INFERENCIA TÁCTICA OBLIGATORIA: no tienes acceso a vídeo ni play-by-play. Cualquier
+   lectura táctica debe estar enmarcada como inferencia: "el USG% sugiere...", "la ratio
+   AST/TO apunta a...", "con ese ORTG el sistema de [entrenador] parece...".
+   PROHIBIDO narrar acciones en tiempo real ("en el minuto 34...", "recibió el balón y...").
+8. ENTRENADORES: solo los nombres que aparecen en los datos. No inventes.
+9. NEGRITA en todos los números estadísticos: **así**.
+10. VOCABULARIO PROHIBIDO: "créditos de valoración", "maestría", "denota", "subraya",
+    "exhibe", "estelar", "galvaniza", "sin lugar a dudas", "no es casualidad",
+    "en definitiva", "diametralmente", "abanico", "crisol". Di lo mismo con menos palabras.
 
-FORMATO DE SALIDA (respeta exactamente):
+FORMATO DE SALIDA — respeta exactamente esto:
 
-ASUNTO: [una línea periodística, sin emoji, con el dato o hecho más llamativo]
+ASUNTO: [una línea, sin emoji, con el hecho más relevante de la jornada]
 
 ## Informe Liga Endesa: {ultima_jornada_label}
 
 ### MVP y Puntos Clave
-[máx. 2 párrafos cortos. Arranca con el dato. Si hay co-MVPs, dáles el mismo espacio.]
+[máx. 2 párrafos. Arranca con el dato. Si hay co-MVPs, mismo espacio para cada uno.]
 
 ### Radar de Eficiencia
 [máx. 3 bullets o 1 párrafo. ORTG, AST ratio, TO ratio con inferencia táctica y entrenadores.]

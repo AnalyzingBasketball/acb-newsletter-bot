@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import google.generativeai as genai
+import anthropic
 import sys
 import re
 import numpy as np
@@ -8,7 +8,7 @@ import numpy as np
 # ==============================================================================
 # 1. CONFIGURACIÓN ESPECIAL LIGA ENDESA (ACB)
 # ==============================================================================
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "claude-sonnet-4-5"
 FILE_PATH = "data/BoxScore_ACB_2025_Cumulative.csv"
 
 # Mapa de Equipos (Los 18 de la Liga Endesa)
@@ -106,9 +106,9 @@ def clean_name(name_raw):
 # ==============================================================================
 # 4. CARGA DE DATOS Y EXTRACCIÓN DE LA JORNADA
 # ==============================================================================
-api_key = os.environ.get("GEMINI_API_KEY")
-if not api_key: guardar_salida("❌ Error: Falta GEMINI_API_KEY.")
-genai.configure(api_key=api_key)
+api_key = os.environ.get("ANTHROPIC_API_KEY")
+if not api_key: guardar_salida("❌ Error: Falta ANTHROPIC_API_KEY.")
+client = anthropic.Anthropic(api_key=api_key)
 
 if not os.path.exists(FILE_PATH): guardar_salida(f"❌ No hay CSV en {FILE_PATH}.")
 df = pd.read_csv(FILE_PATH)
@@ -123,7 +123,7 @@ jornadas_unicas = sorted(df['Week'].unique(), key=extraer_numero_jornada)
 ultima_jornada_label = jornadas_unicas[-1]
 df_week = df[df['Week'] == ultima_jornada_label]
 
-print(f"🤖 Analizando {ultima_jornada_label}...")
+print(f"Analizando {ultima_jornada_label}...")
 
 # ==============================================================================
 # 5. PREPARACIÓN DE DATOS (Top Performers, Equipos, Tendencias)
@@ -184,18 +184,18 @@ if len(jornadas_unicas) >= 1:
                        f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS, {b(row['AST'], 1)} AST.\n")
 
 # ==============================================================================
-# 6. INSTRUCCIONES ESPECÍFICAS PARA LA JORNADA (SIN BUSCADOR REAL)
+# 6. INSTRUCCIONES ESPECÍFICAS PARA LA JORNADA
 # ==============================================================================
 instrucciones_especificas = """
 INSTRUCCIONES ESPECÍFICAS PARA LA JORNADA LIGUERA:
 1. ANÁLISIS DEL MVP: Basa tu análisis del MVP ESTRICTAMENTE en el jugador con mayor valoración (VAL) de los datos proporcionados arriba. Nómbralo en el primer párrafo y analiza su hoja estadística.
 2. CONTEXTO LIGUERO: Menciona la importancia de esta actuación para su equipo en el contexto de la larga liga regular (ganar fuera, mantenerse arriba, etc.).
-3. JUGADAS DETERMINANTES: Basándote en el perfil estadístico de los mejores jugadores, recrea de forma realista y coherente 1 o 2 momentos tácticos del partido para dar contexto a los fríos datos.
+3. ANÁLISIS TÁCTICO INFERIDO (CRÍTICO): No tienes acceso a vídeo ni al play-by-play del partido. Cuando analices jugadas o situaciones tácticas, DEBES enmarcarlas explícitamente como inferencias estadísticas. Usa fórmulas como "El perfil de USG% y TS% sugiere que...", "Los datos apuntan a que el sistema de...", "La ratio de AST/TO indica que...". ESTÁ TOTALMENTE PROHIBIDO narrar acciones concretas en tiempo real ("en el minuto 34", "el jugador recibió el balón y...").
 4. Analiza el RITMO DEL PARTIDO basándote en los datos estadísticos de equipos proporcionados (ORTG, posesiones, ratios).
 """
 
 # ==============================================================================
-# 7. GENERACIÓN IA SIN HERRAMIENTAS EXTERNAS Y REGLAS ESTRICTAS (MODO CONCISO)
+# 7. GENERACIÓN IA CON CLAUDE (MODO CONCISO)
 # ==============================================================================
 
 prompt = f"""
@@ -216,7 +216,7 @@ prompt = f"""
     
     {instrucciones_especificas}
     
-    REGLAS DE ESTILO (¡MUY ESTRICTAS Y DE OBLIGADO CUMPLIMIENTO!):
+    REGLAS DE ESTILO (MUY ESTRICTAS Y DE OBLIGADO CUMPLIMIENTO):
     1. TONO Y AUDIENCIA: Profesional, analítico y estrictamente periodístico. Escribes para expertos en baloncesto en ESPAÑA. Transmite la dificultad de la liga regular ACB.
     2. IDIOMA (ESPAÑOL DE ESPAÑA PURO): Tienes TERMINANTEMENTE PROHIBIDO usar vocabulario latinoamericano. Usa "mate" (nunca volcada), "parqué/cancha" (nunca duela), y "tiros libres" (nunca lanzamiento de personal).
     3. CERO EMOJIS (CRÍTICO): Está TOTALMENTE PROHIBIDO usar emojis en cualquier parte del texto. NI UNO SOLO en el asunto, NI en los títulos, NI en el cuerpo.
@@ -244,11 +244,15 @@ prompt = f"""
 """
 
 try:
-    print(f"🚀 Generando crónica premium para {ultima_jornada_label} (Modo Conciso)...")
-    # SE ELIMINÓ tools="google_search" PARA QUE NO DE ERROR
-    model = genai.GenerativeModel(model_name=MODEL_NAME)
-    response = model.generate_content(prompt)
-    texto = response.text.replace(":\n-", ":\n\n-")
+    print(f"Generando crónica para {ultima_jornada_label} con Claude...")
+    message = client.messages.create(
+        model=MODEL_NAME,
+        max_tokens=1500,
+        messages=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    texto = message.content[0].text.replace(":\n-", ":\n\n-")
     guardar_salida(texto)
 except Exception as e:
-    guardar_salida(f"❌ Error Gemini: {e}")
+    guardar_salida(f"❌ Error Claude API: {e}")

@@ -15,7 +15,7 @@ HORAS_BUFFER = 0    # En 0 porque ejecutamos una vez al día
 LOG_FILE = "data/log.txt"
 BUFFER_FILE = "data/buffer_control.txt"
 
-# API Key y Headers (Ajustados con la información de tu Network tab)
+# API Key y Headers
 API_KEY = '0dd94928-6f57-4c08-a3bd-b1b2f092976e'
 HEADERS_API = {
     'X-APIKEY': API_KEY,
@@ -48,33 +48,62 @@ def get_last_jornada_from_log():
     return last_jornada
 
 def get_game_ids(temp_id, comp_id, jornada_id):
-    # Conectamos directamente a la API interna de la ACB (¡Adiós HTML!)
-    url = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}"
-    print(f"🔍 Consultando API ACB para Jornada {jornada_id}...")
+    # FASE 1: Consultar la API para obtener el ID interno (roundId) de la jornada
+    url_base = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}"
+    print(f"🔍 Fase 1: Obteniendo mapeo de rondas para la Jornada {jornada_id}...")
     ids = []
+    
     try:
-        r = requests.get(url, headers=HEADERS_API, timeout=15)
-        print(f"📡 Código de respuesta API: {r.status_code}")
+        r_base = requests.get(url_base, headers=HEADERS_API, timeout=15)
+        print(f"📡 Código de respuesta API (Fase 1): {r_base.status_code}")
         
-        if r.status_code == 200:
-            partidos = r.json()
+        if r_base.status_code == 200:
+            data = r_base.json()
             
-            # Recorremos todos los partidos de la temporada
-            for partido in partidos:
-                # Si el partido coincide con la jornada que buscamos
-                if str(partido.get('roundNumber')) == str(jornada_id):
+            # Buscar el roundId que corresponde al roundNumber (jornada_id)
+            rondas = data.get('availableFilters', {}).get('rounds', [])
+            round_id_interno = None
+            
+            for ronda in rondas:
+                if str(ronda.get('roundNumber')) == str(jornada_id):
+                    round_id_interno = ronda.get('id')
+                    break
+            
+            if not round_id_interno:
+                print(f"⚠️ No se encontró el ID interno en la API para la Jornada {jornada_id}.")
+                return []
+                
+            print(f"🔗 Correspondencia encontrada: Jornada {jornada_id} = roundId {round_id_interno}")
+            
+            # FASE 2: Pedir a la API los partidos exactos de ese roundId
+            url_jornada = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}&roundId={round_id_interno}"
+            print(f"🔍 Fase 2: Extrayendo partidos del roundId {round_id_interno}...")
+            
+            r_jornada = requests.get(url_jornada, headers=HEADERS_API, timeout=15)
+            print(f"📡 Código de respuesta API (Fase 2): {r_jornada.status_code}")
+            
+            if r_jornada.status_code == 200:
+                data_jornada = r_jornada.json()
+                # Extraer la lista de partidos de la clave "matches"
+                partidos = data_jornada.get('matches', [])
+                
+                for partido in partidos:
                     game_id = partido.get('id')
                     if game_id:
                         ids.append(game_id)
-            
-            print(f"🎯 IDs encontrados para Jornada {jornada_id}: {ids}")
-            return ids
+                        
+                print(f"🎯 IDs encontrados para Jornada {jornada_id}: {ids}")
+                return ids
+            else:
+                print(f"⚠️ Error en Fase 2. Código: {r_jornada.status_code}")
+                return []
+                
         else:
-            print(f"⚠️ La API devolvió un error inesperado. Contenido: {r.text[:200]}")
+            print(f"⚠️ La API base devolvió un error inesperado. Código: {r_base.status_code}")
             return []
 
     except Exception as e: 
-        print(f"❌ Error conectando con la API: {e}")
+        print(f"❌ Error crítico conectando con la API: {e}")
         return []
 
 def is_game_finished(game_id):
@@ -136,7 +165,7 @@ def main():
     
     # 1. BLINDAJE: Si hay menos de 8 partidos, no hacemos nada.
     if len(game_ids) < 8:
-        print(f"⚠️ Solo veo {len(game_ids)} partidos. Faltan datos o ha cambiado la web. No envío nada.")
+        print(f"⚠️ Solo veo {len(game_ids)} partidos. Faltan datos o ha cambiado la API. No envío nada.")
         return
 
     # 2. COMPROBACIÓN: ¿Están todos acabados?

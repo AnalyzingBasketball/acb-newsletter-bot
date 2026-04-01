@@ -53,14 +53,25 @@ def get_game_ids(temp_id, comp_id, jornada_id):
     try:
         r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
         soup = BeautifulSoup(r.content, 'html.parser')
+        
         for a in soup.find_all('a', href=True):
-            if "/partido/estadisticas/id/" in a['href']:
-                try:
-                    pid = int(a['href'].split("/id/")[1].split("/")[0])
-                    ids.append(pid)
-                except: pass
+            href = a['href'].lower()
+            
+            # 1. Filtramos que sea un enlace de un partido
+            if "partido" in href:
+                # 2. Buscamos el ID numérico (compatible con formato viejo y nuevo)
+                match = re.search(r'(?:/id/|-)(\d+)(?:/|#|$|estadisticas)', href)
+                
+                if match:
+                    try:
+                        pid = int(match.group(1))
+                        ids.append(pid)
+                    except: 
+                        pass
         return list(set(ids))
-    except: return []
+    except Exception as e: 
+        print(f"Error extrayendo IDs: {e}")
+        return []
 
 def is_game_finished(game_id):
     url = "https://api2.acb.com/api/matchdata/Result/boxscores"
@@ -115,13 +126,13 @@ def main():
     target_jornada = last_sent + 1
     
     print(f"--- INICIO SCRIPT DE CONTROL ---")
-    print(f"Revisando Jornada: {target_jornada}")
+    print(f"Revisando Jornada/Semana: {target_jornada}")
 
     game_ids = get_game_ids(TEMPORADA, COMPETICION, str(target_jornada))
     
     # 1. BLINDAJE: Si hay menos de 8 partidos, no hacemos nada.
     if len(game_ids) < 8:
-        print(f"⚠️ Solo veo {len(game_ids)} partidos. Faltan datos en la web. No envío nada.")
+        print(f"⚠️ Solo veo {len(game_ids)} partidos en el listado. Faltan datos o ha cambiado la web. No envío nada.")
         return
 
     # 2. COMPROBACIÓN: ¿Están todos acabados?

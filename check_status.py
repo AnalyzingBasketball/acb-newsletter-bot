@@ -48,28 +48,40 @@ def get_last_jornada_from_log():
     return last_jornada
 
 def get_game_ids(temp_id, comp_id, jornada_id):
-    url = f"https://www.acb.com/resultados-clasificacion/ver/temporada_id/{temp_id}/competicion_id/{comp_id}/jornada_numero/{jornada_id}"
-    print(f"🔍 Escaneando URL: {url}")
+    # Usamos el calendario general porque la ACB borró la URL de resultados por jornada
+    url = "https://www.acb.com/es/liga/calendario"
+    print(f"🔍 Buscando Jornada {jornada_id} en: {url}")
     ids = []
     try:
-        # Usamos un User-Agent de navegador real para evitar bloqueos 403
-        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=10)
+        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=15)
         print(f"📡 Código de respuesta ACB: {r.status_code}")
+        html = r.text
         
-        soup = BeautifulSoup(r.content, 'html.parser')
+        # 1. Cortamos el HTML justo donde empieza la "Jornada X"
+        # Tomamos la última coincidencia por si aparece en menús superiores
+        partes = re.split(rf'Jornada\s+{jornada_id}\b', html, flags=re.IGNORECASE)
+        if len(partes) < 2:
+            print(f"⚠️ No se encontró la Jornada {jornada_id} en el calendario.")
+            return []
+            
+        bloque = partes[-1]
         
+        # 2. Cortamos el final justo donde empieza la siguiente jornada
+        siguiente = int(jornada_id) + 1
+        bloque_partes = re.split(rf'Jornada\s+{siguiente}\b', bloque, flags=re.IGNORECASE)
+        bloque_aislado = bloque_partes[0]
+        
+        # 3. Extraemos los IDs de los enlaces, pero SOLO de este bloque aislado
+        soup = BeautifulSoup(bloque_aislado, 'html.parser')
         for a in soup.find_all('a', href=True):
             href = a['href'].lower()
-            
-            # Filtro ancho: buscamos cualquier enlace que huela a partido
             if any(palabra in href for palabra in ["partido", "estadistica", "live"]):
-                # Cazamos a lo bruto cualquier número de 5 o 6 cifras dentro del enlace
                 numeros = re.findall(r'\b(\d{5,6})\b', href)
                 for num in numeros:
                     ids.append(int(num))
                     
         ids_finales = list(set(ids))
-        print(f"🎯 IDs encontrados: {ids_finales}")
+        print(f"🎯 IDs encontrados para Jornada {jornada_id}: {ids_finales}")
         return ids_finales
         
     except Exception as e: 

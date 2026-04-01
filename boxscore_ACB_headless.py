@@ -16,10 +16,11 @@ CARPETA_SALIDA = "data"
 # API Key pública que usa el frontend de ACB (puede cambiar con el tiempo)
 API_KEY = '0dd94928-6f57-4c08-a3bd-b1b2f092976e'
 HEADERS_API = {
-    'x-apikey': API_KEY,
-    'origin': 'https://live.acb.com',
-    'referer': 'https://live.acb.com/',
-    'user-agent': 'Mozilla/5.0'
+    'X-APIKEY': API_KEY,
+    'Accept': 'application/json',
+    'Origin': 'https://www.acb.com',
+    'Referer': 'https://www.acb.com/es/liga/calendario',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15'
 }
 
 MAPPING_ACB = {
@@ -72,26 +73,45 @@ def get_codigo_inteligente(nombre_api):
     return nombre_limpio[:3]
 
 # ==============================================================================
-# 3. LÓGICA DE EXTRACCIÓN
+# 3. LÓGICA DE EXTRACCIÓN (NUEVA API)
 # ==============================================================================
 
 def get_game_ids(temp_id, comp_id, jornada_id):
-    """Extrae IDs de la web de resultados."""
-    url = f"https://www.acb.com/resultados-clasificacion/ver/temporada_id/{temp_id}/competicion_id/{comp_id}/jornada_numero/{jornada_id}"
+    """Extrae IDs usando directamente la API de ACB."""
+    url_base = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}"
     ids = []
+    
     try:
-        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=10)
-        soup = BeautifulSoup(r.content, 'html.parser')
+        r_base = requests.get(url_base, headers=HEADERS_API, timeout=15)
         
-        for a in soup.find_all('a', href=True):
-            if "/partido/estadisticas/id/" in a['href']:
-                try:
-                    pid = int(a['href'].split("/id/")[1].split("/")[0])
-                    ids.append(pid)
-                except: pass
-        return list(set(ids))
+        if r_base.status_code == 200:
+            data = r_base.json()
+            rondas = data.get('availableFilters', {}).get('rounds', [])
+            round_id_interno = None
+            
+            for ronda in rondas:
+                if str(ronda.get('roundNumber')) == str(jornada_id):
+                    round_id_interno = ronda.get('id')
+                    break
+            
+            if not round_id_interno:
+                return []
+                
+            url_jornada = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}&roundId={round_id_interno}"
+            r_jornada = requests.get(url_jornada, headers=HEADERS_API, timeout=15)
+            
+            if r_jornada.status_code == 200:
+                data_jornada = r_jornada.json()
+                partidos = data_jornada.get('matches', [])
+                
+                for partido in partidos:
+                    game_id = partido.get('id')
+                    if game_id:
+                        ids.append(game_id)
+                return ids
+        return []
     except Exception as e:
-        print(f"Error accediendo a calendario: {e}")
+        print(f"Error accediendo a la API de calendario: {e}")
         return []
 
 def get_team_totals(team_data):
@@ -149,8 +169,6 @@ def get_stats_api(game_id, season_lbl, week_lbl):
         game_poss = (poss_loc + poss_vis) / 2
         
         # --- CORRECCIÓN CRÍTICA AQUI ---
-        # Antes: tm_minutes = max(tot_loc['MIN'], tot_vis['MIN'], 200.0)
-        # Ahora: Quitamos el 200.0 para que use la duración real (aprox 40.0)
         tm_minutes = max(tot_loc['MIN'], tot_vis['MIN'])
         if tm_minutes == 0: tm_minutes = 40.0 # Fallback de seguridad
         # -------------------------------
@@ -203,7 +221,6 @@ def get_stats_api(game_id, season_lbl, week_lbl):
                 
                 team_poss_calc = tm_stats['FGA'] + 0.44 * tm_stats['FTA'] + tm_stats['TOV']
                 
-                # USG% ahora será correcto porque tm_minutes es ~40, no 200
                 usg_pct = safe_div(player_poss_used * tm_minutes, mp * team_poss_calc) * 100 if mp > 0 else 0
                 
                 pppos = safe_div(pts, player_poss_used)
@@ -218,7 +235,6 @@ def get_stats_api(game_id, season_lbl, week_lbl):
                 drb_pct = safe_div(drb * tm_minutes, mp * (tm_stats['DRB'] + opp_stats['ORB'])) * 100
                 trb_pct = safe_div(trb * tm_minutes, mp * (tm_stats['TRB'] + opp_stats['TRB'])) * 100
                 
-                # AST% ahora será correcto
                 ast_den = ((mp / tm_minutes) * tm_stats['FGM']) - fgm
                 ast_pct = safe_div(ast, ast_den) * 100
                 
@@ -283,7 +299,7 @@ def main():
     while True:
         print(f"\n🔍 Analizando Jornada {jornada}...")
         
-        # 1. Obtener IDs de la jornada
+        # 1. Obtener IDs de la jornada usando la API correcta
         ids = get_game_ids(TEMPORADA, COMPETICION, str(jornada))
         
         # 2. Verificar si es el 'futuro' (Lista vacía)

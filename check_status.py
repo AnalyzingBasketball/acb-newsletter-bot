@@ -5,7 +5,6 @@ import datetime
 import subprocess 
 import time
 import random
-from bs4 import BeautifulSoup
 
 # ==============================================================================
 # CONFIGURACIÓN
@@ -16,17 +15,18 @@ HORAS_BUFFER = 0    # En 0 porque ejecutamos una vez al día
 LOG_FILE = "data/log.txt"
 BUFFER_FILE = "data/buffer_control.txt"
 
-# API Key y Headers
+# API Key y Headers (Ajustados con la información de tu Network tab)
 API_KEY = '0dd94928-6f57-4c08-a3bd-b1b2f092976e'
 HEADERS_API = {
-    'x-apikey': API_KEY,
-    'origin': 'https://live.acb.com',
-    'referer': 'https://live.acb.com/',
-    'user-agent': 'Mozilla/5.0'
+    'X-APIKEY': API_KEY,
+    'Accept': 'application/json',
+    'Origin': 'https://www.acb.com',
+    'Referer': 'https://www.acb.com/es/liga/calendario',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.4 Safari/605.1.15'
 }
 
 # ==============================================================================
-# ZONA 1: FUNCIONES DE SCRAPING
+# ZONA 1: FUNCIONES DE EXTRACCIÓN Y ESTADO
 # ==============================================================================
 
 def get_last_jornada_from_log():
@@ -48,44 +48,33 @@ def get_last_jornada_from_log():
     return last_jornada
 
 def get_game_ids(temp_id, comp_id, jornada_id):
-    # Usamos el calendario general porque la ACB borró la URL de resultados por jornada
-    url = "https://www.acb.com/es/liga/calendario"
-    print(f"🔍 Buscando Jornada {jornada_id} en: {url}")
+    # Conectamos directamente a la API interna de la ACB (¡Adiós HTML!)
+    url = f"https://api2.acb.com/api/seasondata/Competition/matches?competitionId={comp_id}"
+    print(f"🔍 Consultando API ACB para Jornada {jornada_id}...")
     ids = []
     try:
-        r = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}, timeout=15)
-        print(f"📡 Código de respuesta ACB: {r.status_code}")
-        html = r.text
+        r = requests.get(url, headers=HEADERS_API, timeout=15)
+        print(f"📡 Código de respuesta API: {r.status_code}")
         
-        # 1. Cortamos el HTML justo donde empieza la "Jornada X"
-        # Tomamos la última coincidencia por si aparece en menús superiores
-        partes = re.split(rf'Jornada\s+{jornada_id}\b', html, flags=re.IGNORECASE)
-        if len(partes) < 2:
-            print(f"⚠️ No se encontró la Jornada {jornada_id} en el calendario.")
-            return []
+        if r.status_code == 200:
+            partidos = r.json()
             
-        bloque = partes[-1]
-        
-        # 2. Cortamos el final justo donde empieza la siguiente jornada
-        siguiente = int(jornada_id) + 1
-        bloque_partes = re.split(rf'Jornada\s+{siguiente}\b', bloque, flags=re.IGNORECASE)
-        bloque_aislado = bloque_partes[0]
-        
-        # 3. Extraemos los IDs de los enlaces, pero SOLO de este bloque aislado
-        soup = BeautifulSoup(bloque_aislado, 'html.parser')
-        for a in soup.find_all('a', href=True):
-            href = a['href'].lower()
-            if any(palabra in href for palabra in ["partido", "estadistica", "live"]):
-                numeros = re.findall(r'\b(\d{5,6})\b', href)
-                for num in numeros:
-                    ids.append(int(num))
-                    
-        ids_finales = list(set(ids))
-        print(f"🎯 IDs encontrados para Jornada {jornada_id}: {ids_finales}")
-        return ids_finales
-        
+            # Recorremos todos los partidos de la temporada
+            for partido in partidos:
+                # Si el partido coincide con la jornada que buscamos
+                if str(partido.get('roundNumber')) == str(jornada_id):
+                    game_id = partido.get('id')
+                    if game_id:
+                        ids.append(game_id)
+            
+            print(f"🎯 IDs encontrados para Jornada {jornada_id}: {ids}")
+            return ids
+        else:
+            print(f"⚠️ La API devolvió un error inesperado. Contenido: {r.text[:200]}")
+            return []
+
     except Exception as e: 
-        print(f"❌ Error extrayendo IDs: {e}")
+        print(f"❌ Error conectando con la API: {e}")
         return []
 
 def is_game_finished(game_id):
@@ -147,7 +136,7 @@ def main():
     
     # 1. BLINDAJE: Si hay menos de 8 partidos, no hacemos nada.
     if len(game_ids) < 8:
-        print(f"⚠️ Solo veo {len(game_ids)} partidos en el listado. Faltan datos o ha cambiado la web. No envío nada.")
+        print(f"⚠️ Solo veo {len(game_ids)} partidos. Faltan datos o ha cambiado la web. No envío nada.")
         return
 
     # 2. COMPROBACIÓN: ¿Están todos acabados?

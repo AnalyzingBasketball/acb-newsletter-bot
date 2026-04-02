@@ -1,9 +1,17 @@
 import pandas as pd
 import os
-import google.generativeai as genai
 import sys
 import re
 import numpy as np
+
+# Importación actualizada de la nueva SDK de Gemini
+try:
+    from google import genai
+    from google.genai import types
+except ImportError:
+    print("❌ Error: Necesitas instalar la nueva librería de Gemini.")
+    print("Ejecuta: pip install google-genai")
+    sys.exit(1)
 
 # ==============================================================================
 # 1. CONFIGURACIÓN ESPECIAL LIGA ENDESA (ACB)
@@ -106,7 +114,9 @@ def clean_name(name_raw):
 # ==============================================================================
 api_key = os.environ.get("GEMINI_API_KEY")
 if not api_key: guardar_salida("❌ Error: Falta GEMINI_API_KEY.")
-genai.configure(api_key=api_key)
+
+# Inicialización con el nuevo SDK de Gemini
+client = genai.Client(api_key=api_key)
 
 if not os.path.exists(FILE_PATH): guardar_salida(f"❌ No hay CSV en {FILE_PATH}.")
 df = pd.read_csv(FILE_PATH)
@@ -116,9 +126,20 @@ for col in cols_num:
     if col in df.columns:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
-jornadas_unicas = sorted(df['Week'].unique(), key=extraer_numero_jornada)
-ultima_jornada_label = jornadas_unicas[-1]
+# --- 🚨 EL ARREGLO CRÍTICO: OBEDECER AL SCRIPT PRINCIPAL 🚨 ---
+if len(sys.argv) > 1:
+    # Si recibe "24" desde check_status.py, fuerza a que sea la Jornada 24
+    num_jornada_objetivo = int(sys.argv[1])
+    ultima_jornada_label = f"Jornada {num_jornada_objetivo}"
+else:
+    # Si lo ejecutas a mano, coge la última que encuentre (comportamiento antiguo)
+    jornadas_unicas = sorted(df['Week'].unique(), key=extraer_numero_jornada)
+    ultima_jornada_label = jornadas_unicas[-1]
+
 df_week = df[df['Week'] == ultima_jornada_label]
+
+if df_week.empty:
+    guardar_salida(f"❌ Error: No se encontraron datos para {ultima_jornada_label} en el CSV.")
 
 print(f"Analizando {ultima_jornada_label}...")
 
@@ -157,7 +178,11 @@ for _, row in top_rest.iterrows():
 # --- OUTSIDER: jugador cuya VAL de esta jornada más supera su media de temporada ---
 txt_outsider = ""
 try:
-    df_prev = df[df['Week'] != ultima_jornada_label]
+    # Usar todas las jornadas anteriores al número de la jornada actual
+    num_actual = extraer_numero_jornada(ultima_jornada_label)
+    df['Num_Jornada'] = df['Week'].apply(extraer_numero_jornada)
+    df_prev = df[df['Num_Jornada'] < num_actual]
+    
     if len(df_prev) > 0:
         season_avg = df_prev.groupby(['Name', 'Team'])['VAL'].mean().reset_index()
         season_avg.columns = ['Name', 'Team', 'VAL_avg']
@@ -202,16 +227,20 @@ txt_teams = f"""
 """
 
 txt_trends = ""
-if len(jornadas_unicas) >= 1:
-    last_3 = jornadas_unicas[-3:]
-    df_last = df[df['Week'].isin(last_3)]
-    means = df_last.groupby(['Name', 'Team'])[['VAL', 'PTS', 'AST', 'TS%']].mean().reset_index()
-    hot = means.sort_values('VAL', ascending=False).head(5)
-    for _, row in hot.iterrows():
-        t_name = clean_name(row['Name'])
-        txt_trends += (f"- {t_name} ({get_team_name(row['Team'], False)}): "
-                       f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS, "
-                       f"{b(row['AST'], 1)} AST, TS%: {b(row['TS%'], 1, True)}.\n")
+num_actual = extraer_numero_jornada(ultima_jornada_label)
+if num_actual >= 3:
+    last_3_nums = [num_actual-2, num_actual-1, num_actual]
+    last_3_labels = [f"Jornada {n}" for n in last_3_nums]
+    df_last = df[df['Week'].isin(last_3_labels)]
+    
+    if not df_last.empty:
+        means = df_last.groupby(['Name', 'Team'])[['VAL', 'PTS', 'AST', 'TS%']].mean().reset_index()
+        hot = means.sort_values('VAL', ascending=False).head(5)
+        for _, row in hot.iterrows():
+            t_name = clean_name(row['Name'])
+            txt_trends += (f"- {t_name} ({get_team_name(row['Team'], False)}): "
+                           f"{b(row['VAL'], 1)} VAL, {b(row['PTS'], 1)} PTS, "
+                           f"{b(row['AST'], 1)} AST, TS%: {b(row['TS%'], 1, True)}.\n")
 
 # ==============================================================================
 # 6. CONSTRUCCIÓN DEL PROMPT
@@ -384,11 +413,11 @@ Inferencia táctica. Entrenadores. Opinión con criterio.]{bloque_outsider_forma
 # 7. GENERACIÓN CON GEMINI
 # ==============================================================================
 try:
-    print(f"Generando newsletter para {ultima_jornada_label}...")
-    model = genai.GenerativeModel(model_name=MODEL_NAME)
-    response = model.generate_content(
-        prompt,
-        generation_config=genai.types.GenerationConfig(temperature=0.7)
+    print(f"Generando newsletter con la nueva API (google-genai)...")
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents=prompt,
+        config=types.GenerateContentConfig(temperature=0.7)
     )
     texto = response.text.replace(":\n-", ":\n\n-")
     guardar_salida(texto)

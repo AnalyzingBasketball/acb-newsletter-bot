@@ -176,8 +176,11 @@ def main():
     
     print(f"📊 Estado: {finished_count}/{len(game_ids)} terminados.")
 
-    if finished_count == len(game_ids) and len(game_ids) > 0:
-        print("✅ Jornada terminada.")
+    # NUEVO FILTRO: Definimos el mínimo de partidos terminados para lanzar la newsletter (Ej: 7 de 9)
+    MIN_PARTIDOS_TERMINADOS = 7
+
+    if finished_count >= MIN_PARTIDOS_TERMINADOS:
+        print(f"✅ Jornada dada por terminada ({finished_count} jugados de {len(game_ids)}).")
         
         # --- EL TRUCO DEL FACTOR HUMANO ---
         minutos_espera = random.randint(5, 45)

@@ -26,9 +26,16 @@ if not os.path.exists(ARCHIVO_MD):
     print(f"❌ Error: No se encuentra {ARCHIVO_MD}")
     sys.exit(1)
 
-# LEEMOS TODO EL CONTENIDO RESPETANDO ESPACIOS (Clave para listas Markdown)
+# LEEMOS TODO EL CONTENIDO RESPETANDO ESPACIOS
 with open(ARCHIVO_MD, "r", encoding="utf-8") as f:
     raw_content = f.read()
+
+# 👇 ESCUDO ANTI-ERRORES (¡NUEVO!) 👇
+if "❌ Error Gemini" in raw_content or "Quota exceeded" in raw_content:
+    print("🚨 ALERTA CRÍTICA: El borrador contiene un error de la IA.")
+    print("Abortando el envío inmediatamente para proteger a los suscriptores.")
+    sys.exit(1) # Esto detiene el script en seco y cancela los correos
+# 👆 FIN DEL ESCUDO 👆
 
 # Dividimos en líneas pero manteniendo el formato
 lines = raw_content.split('\n')
@@ -36,18 +43,7 @@ first_line = lines[0].strip() if lines else "Informe ACB"
 
 # LÓGICA DE ASUNTO CLICKBAIT
 if first_line.startswith("ASUNTO:"):
-    # 1. Extraemos el asunto "Clickbait"
-    asunto_texto = first_line.replace("ASUNTO:", "").strip()
-    asunto_email = f"🏀 {asunto_texto}"
-    
-    # 2. Quitamos la primera línea del cuerpo del mensaje para no repetirla
-    # Unimos el resto de líneas recuperando los saltos de línea
-    md_content = "\n".join(lines[1:])
-else:
-    # Lógica antigua (por si la IA falla y no pone ASUNTO:)
-    md_content = raw_content
-    titulo_clean = first_line.replace('#', '').strip()
-    asunto_email = f"🏀 Informe: {titulo_clean}"
+# ... (el resto del código sigue igual hacia abajo)
 
 # --- 3. PREPARAR CAMPAÑA ---
 print("📥 Preparando campaña de Email...")

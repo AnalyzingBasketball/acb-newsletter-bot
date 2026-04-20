@@ -1,18 +1,18 @@
-ASUNTO: Jornada 26 Liga Endesa: La Explosión Ofensiva de DeJulius y las Claves Tácticas
+ASUNTO: Análisis Jornada 27: Oriol Paulí Lidera, la Eficiencia Marca el Ritmo ACB
 
-## Informe Liga Endesa: Jornada 26
+## Informe Liga Endesa: Jornada 27
 
 ### MVP y Puntos Clave de la Jornada
-La Jornada **26** de la Liga Endesa coronó a David DeJulius, el exterior del UCAM Murcia, como el MVP destacado con **38** de valoración. Su exhibición ofensiva incluyó **31** puntos con una eficiencia asombrosa del **82.6**% en True Shooting, marcando una actuación fundamental para los universitarios. La capacidad del jugador murcianista para producir sin ceder balones y ejecutar cada posesión con precisión resalta la dificultad de dominar en una liga tan exigente.
+Oriol Paulí, del Hiopos Lleida, se erigió como el jugador más destacado de la Jornada **27** con una valoración de **35**. El alero mostró un rendimiento ofensivo sobresaliente, anotando **27** puntos con una eficiencia asombrosa del **74.7**% de True Shooting, a lo que sumó **6** rebotes. Su actuación subraya la dificultad de dominar en la exigente Liga Endesa.
 
-El impacto de DeJulius trascendió el dato puro de anotación. Se observó su maestría en el pick & roll central, donde su lectura permitía tanto el tiro tras bote con espacio como la generación de ventajas para el lado débil, que los compañeros del conjunto de Sito Alonso supieron capitalizar, alineado con la alta fluidez de **29.9** asistencias por cada **100** posesiones del UCAM. Esta victoria es crucial para la estabilidad de los granas en la zona alta de la clasificación, donde cada triunfo fuera de casa se valora doble.
+Su impacto fue determinante para el conjunto ilerdense en la exigente liga regular. La eficiencia de Paulí, capaz de generar y finalizar jugadas con solvencia ante defensas cerradas, se complementa con la fluidez ofensiva que Gerard Encuentra busca en el Hiopos Lleida, evidenciada en las **36.6** asistencias por cada **100** posesiones.
 
 ### Radar de Eficiencia y Pizarra Táctica
-El Casademont Zaragoza de Joan Plaza desplegó el mejor ataque de la jornada, alcanzando **139.5** puntos por cada **100** posesiones, combinado con un control del balón ejemplar al registrar solo **7.8** pérdidas por **100**. Esta ratio subraya una ejecución ofensiva pulcra y un IQ colectivo alto, minimizando errores y maximizando la conversión. En contraste, la fluidez ofensiva del UCAM Murcia de Sito Alonso, con **29.9** asistencias por **100** posesiones, demostró su capacidad para mover el balón y generar buenos tiros, evidenciando una circulación dinámica que desgasta las defensas rivales.
+La Jornada **27** resalta diversas filosofías tácticas. El Río Breogán, bajo Luis Casimiro, lidera en ataque con **123.3** puntos por cada **100** posesiones, mostrando una capacidad de anotación superior que impone un ritmo alto y efectivo. Por otro lado, el San Pablo Burgos de Porfi Fisac ejemplifica el control, minimizando las pérdidas a solo **7.5** por cada **100** posesiones, priorizando la ejecución sobre la velocidad. La fluidez del Hiopos Lleida de Gerard Encuentra, con **36.6** asistencias por cada **100** posesiones, potencia un estilo de juego coral que genera múltiples ventajas.
 
 ### Jugadores en Racha (Últimas 3 Jornadas)
-- Luka Bozic (COV): **32.5** VAL, **22.0** PTS, **2.5** AST.
-- Melvin Ejim (LLE): **32.0** VAL, **27.0** PTS, **1.5** AST.
-- David DeJulius (UCM): **26.0** VAL, **21.0** PTS, **9.0** AST.
-- Marcelinho Huertas (TEN): **26.0** VAL, **22.0** PTS, **6.0** AST.
-- Jean Montero (VBC): **25.0** VAL, **24.0** PTS, **4.5** AST.
+- Edy Tavares (RMB): **32.0** VAL, **18.0** PTS, **2.0** AST.
+- David DeJulius (UCM): **31.5** VAL, **26.5** PTS, **8.5** AST.
+- Luka Bozic (COV): **30.0** VAL, **20.0** PTS, **1.0** AST.
+- Oriol Paulí (LLE): **27.5** VAL, **21.0** PTS, **5.5** AST.
+- Melvin Ejim (LLE): **26.5** VAL, **22.5** PTS, **2.5** AST.

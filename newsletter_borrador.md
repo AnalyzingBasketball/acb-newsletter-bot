@@ -1,18 +1,18 @@
-ASUNTO: Análisis Jornada 27: Oriol Paulí Lidera, la Eficiencia Marca el Ritmo ACB
+ASUNTO: Jornada 28 ACB: Brussino Brilla con **33** de VAL y el Madrid Lidera la Eficiencia Ofensiva
 
-## Informe Liga Endesa: Jornada 27
+## Informe Liga Endesa: Jornada 28
 
 ### MVP y Puntos Clave de la Jornada
-Oriol Paulí, del Hiopos Lleida, se erigió como el jugador más destacado de la Jornada **27** con una valoración de **35**. El alero mostró un rendimiento ofensivo sobresaliente, anotando **27** puntos con una eficiencia asombrosa del **74.7**% de True Shooting, a lo que sumó **6** rebotes. Su actuación subraya la dificultad de dominar en la exigente Liga Endesa.
+La Jornada **28** de la Liga Endesa ha tenido en Nico Brussino, alero del equipo claretiano, su gran protagonista estadístico. El exterior de Dreamland Gran Canaria alcanzó una valoración de **33**, fruto de **26** puntos con un espectacular **88.1**% de eficiencia real (TS%) y **5** rebotes. Este rendimiento es crucial para los aurinegros, consolidando su posición en la zona alta de la tabla en una fase exigente de la competición regular.
 
-Su impacto fue determinante para el conjunto ilerdense en la exigente liga regular. La eficiencia de Paulí, capaz de generar y finalizar jugadas con solvencia ante defensas cerradas, se complementa con la fluidez ofensiva que Gerard Encuentra busca en el Hiopos Lleida, evidenciada en las **36.6** asistencias por cada **100** posesiones.
+En el parqué, la actuación de Brussino se tradujo en momentos clave. Un ejemplo fue su capacidad para explotar el spacing defensivo con cortes al aro desde el lado débil, generando mates liberados o canastas de alta probabilidad. Además, su inteligencia para forzar contactos y acudir a la línea de tiros libres con consistencia, sumado a una selectiva elección de tiro, explica su formidable eficiencia real del **88.1**%.
 
 ### Radar de Eficiencia y Pizarra Táctica
-La Jornada **27** resalta diversas filosofías tácticas. El Río Breogán, bajo Luis Casimiro, lidera en ataque con **123.3** puntos por cada **100** posesiones, mostrando una capacidad de anotación superior que impone un ritmo alto y efectivo. Por otro lado, el San Pablo Burgos de Porfi Fisac ejemplifica el control, minimizando las pérdidas a solo **7.5** por cada **100** posesiones, priorizando la ejecución sobre la velocidad. La fluidez del Hiopos Lleida de Gerard Encuentra, con **36.6** asistencias por cada **100** posesiones, potencia un estilo de juego coral que genera múltiples ventajas.
+En el análisis colectivo, el Real Madrid de Sergio Scariolo continúa exhibiendo el mejor ataque liguero con **126.3** puntos por cada cien posesiones, un dato que subraya su capacidad constante de generación de ventajas. La fluidez ofensiva de Unicaja, bajo la dirección de Ibon Navarro, se materializa en **30.6** asistencias por cada cien posesiones, evidenciando un alto IQ colectivo y ejecución coral. Por su parte, el Barça de Xavi Pascual mantiene un control de balón férreo, registrando solo **7.8** pérdidas por cada cien posesiones; esta gestión del esférico es clave para dictar el ritmo de sus encuentros, minimizando las transiciones del rival y asegurando posesiones de alta calidad.
 
 ### Jugadores en Racha (Últimas 3 Jornadas)
-- Edy Tavares (RMB): **32.0** VAL, **18.0** PTS, **2.0** AST.
-- David DeJulius (UCM): **31.5** VAL, **26.5** PTS, **8.5** AST.
-- Luka Bozic (COV): **30.0** VAL, **20.0** PTS, **1.0** AST.
-- Oriol Paulí (LLE): **27.5** VAL, **21.0** PTS, **5.5** AST.
-- Melvin Ejim (LLE): **26.5** VAL, **22.5** PTS, **2.5** AST.
+- Edy Tavares (RMB): **31.5** VAL, **18.0** PTS, **1.0** AST.
+- David DeJulius (UCM): **30.3** VAL, **25.3** PTS, **8.0** AST.
+- Luka Bozic (COV): **29.7** VAL, **18.3** PTS, **3.3** AST.
+- Oriol Paulí (LLE): **28.0** VAL, **23.3** PTS, **4.7** AST.
+- Mario Hezonja (RMB): **25.5** VAL, **18.5** PTS, **2.5** AST.

@@ -1,18 +1,18 @@
-ASUNTO: Jornada 28 ACB: Brussino Brilla con **33** de VAL y el Madrid Lidera la Eficiencia Ofensiva
+ASUNTO: Jornada **29**: La Soberbia Exhibición de Hezonja y la Máxima Eficiencia Ofensiva de la Penya
 
-## Informe Liga Endesa: Jornada 28
+## Informe Liga Endesa: Jornada 29
 
 ### MVP y Puntos Clave de la Jornada
-La Jornada **28** de la Liga Endesa ha tenido en Nico Brussino, alero del equipo claretiano, su gran protagonista estadístico. El exterior de Dreamland Gran Canaria alcanzó una valoración de **33**, fruto de **26** puntos con un espectacular **88.1**% de eficiencia real (TS%) y **5** rebotes. Este rendimiento es crucial para los aurinegros, consolidando su posición en la zona alta de la tabla en una fase exigente de la competición regular.
+Mario Hezonja, el alero croata del Real Madrid, dominó la Jornada **29** con una valoración de **53**, fruto de **40** puntos con un True Shooting del **83.5%** y **11** rebotes. Esta actuación sobresaliente es crucial para el conjunto blanco en su pugna por mantener la primera plaza de la liga regular, demostrando la capacidad del equipo para generar ventajas decisivas incluso en los tramos más exigentes del calendario ACB. La versatilidad del croata, capaz de generar tiro tras bote o atacar el aro con contundencia, minimiza los errores y maximiza el retorno ofensivo.
 
-En el parqué, la actuación de Brussino se tradujo en momentos clave. Un ejemplo fue su capacidad para explotar el spacing defensivo con cortes al aro desde el lado débil, generando mates liberados o canastas de alta probabilidad. Además, su inteligencia para forzar contactos y acudir a la línea de tiros libres con consistencia, sumado a una selectiva elección de tiro, explica su formidable eficiencia real del **88.1**%.
+En un momento determinante del encuentro, con la defensa rival colapsando la pintura, Hezonja supo leer la situación. Tras un bloqueo directo en el poste alto, el croata ejecutó un 'step-back' impecable, liberándose de su defensor y conectando un tiro de tres puntos que amplió la brecha. Además, su incidencia en el rebote ofensivo permitió segundas oportunidades clave, como un mate tras su propio fallo, que desmoralizó al adversario y sostuvo la ventaja del Real Madrid.
 
 ### Radar de Eficiencia y Pizarra Táctica
-En el análisis colectivo, el Real Madrid de Sergio Scariolo continúa exhibiendo el mejor ataque liguero con **126.3** puntos por cada cien posesiones, un dato que subraya su capacidad constante de generación de ventajas. La fluidez ofensiva de Unicaja, bajo la dirección de Ibon Navarro, se materializa en **30.6** asistencias por cada cien posesiones, evidenciando un alto IQ colectivo y ejecución coral. Por su parte, el Barça de Xavi Pascual mantiene un control de balón férreo, registrando solo **7.8** pérdidas por cada cien posesiones; esta gestión del esférico es clave para dictar el ritmo de sus encuentros, minimizando las transiciones del rival y asegurando posesiones de alta calidad.
+La Jornada **29** también destacó la sofisticación ofensiva de la Penya, líder en eficiencia con **143.6** puntos por cada **100** posesiones. Bajo la dirección de Dani Miret, el Joventut Badalona exhibe una fluidez excepcional, evidenciada por sus **35.2** asistencias por cada **100** posesiones, la cifra más alta de la liga. Este caudal de pase se complementa con un control del balón admirable, registrando apenas **5.4** pérdidas por cada **100** posesiones. El sistema de Dani Miret se fundamenta en un IQ colectivo elevado, la generación constante de ventajas a través del spacing y la búsqueda de la mejor opción de tiro, minimizando los riesgos y maximizando la ejecución.
 
 ### Jugadores en Racha (Últimas 3 Jornadas)
-- Edy Tavares (RMB): **31.5** VAL, **18.0** PTS, **1.0** AST.
-- David DeJulius (UCM): **30.3** VAL, **25.3** PTS, **8.0** AST.
-- Luka Bozic (COV): **29.7** VAL, **18.3** PTS, **3.3** AST.
-- Oriol Paulí (LLE): **28.0** VAL, **23.3** PTS, **4.7** AST.
-- Mario Hezonja (RMB): **25.5** VAL, **18.5** PTS, **2.5** AST.
+- Mario Hezonja (RMB): **41.0** VAL, **28.5** PTS, **4.5** AST.
+- David DeJulius (UCM): **33.5** VAL, **25.0** PTS, **9.5** AST.
+- Luka Bozic (COV): **31.0** VAL, **18.0** PTS, **5.0** AST.
+- Edy Tavares (RMB): **31.0** VAL, **18.0** PTS, **0.0** AST.
+- Raulzinho Neto (BUR): **30.5** VAL, **23.5** PTS, **5.5** AST.

@@ -1,18 +1,18 @@
-ASUNTO: Jornada 30 ACB: Pustovyi Lidera la Eficiencia Ofensiva en una Liga Competitiva
+ASUNTO: Jornada **31** ACB: La Explosión de Bozic y el Pulso Táctico de la Liga Endesa
 
-## Informe Liga Endesa: Jornada 30
+## Informe Liga Endesa: Jornada 31
 
 ### MVP y Puntos Clave de la Jornada
-Artem Pustovyi, el pívot del MoraBanc Andorra, se erige como el MVP de la Jornada **30** con una valoración estratosférica de **37**. Su impacto se tradujo en **27** puntos con una eficiencia brutal (TS% del **77.1**%) y **8** rebotes, dominando la pintura en un partido vital para los pirenaicos. Esta actuación subraya la importancia del pívot en el esquema de Zan Tabak, aportando una referencia interior determinante.
+Luka Bozic, del Covirán Granada, acaparó el protagonismo individual de la Jornada **31** de la Liga Endesa con una valoración de **35**. Esta cifra subraya la influencia decisiva del jugador balcánico en su equipo, especialmente relevante para el conjunto nazarí en la pugna por la permanencia, donde cada victoria es vital en la larga y exigente liga regular.
 
-El rendimiento del MoraBanc Andorra, que ostenta el Mejor Ataque de la competición con **127.6** puntos por **100** posesiones, resalta la ejecución ofensiva del equipo. La capacidad de Pustovyi para finalizar jugadas de alta dificultad, ya sea con un mate tras pick & roll central o un post-up directo generando un mismatch, ha sido crucial para el conjunto andorrano en el exigente contexto de la Liga Endesa.
+La jornada también destacó actuaciones de gran calibre como la de Darrun Hilliard, del Bilbao Basket, quien firmó **29** de valoración con **21** puntos y **5** rebotes, mostrando una eficiencia anotadora sobresaliente con un TS% del **93.8**%. Un posible instante clave pudo ser un tiro tras bote desde la cabecera, explotando un colapso defensivo tras un pick & roll central, donde su IQ y spacing permitieron capitalizar una ventaja creada en el lado débil.
 
 ### Radar de Eficiencia y Pizarra Táctica
-La eficiencia ofensiva domina el análisis de la jornada. El MoraBanc Andorra, con Zan Tabak al mando, demuestra una capacidad de generación de ventajas y finalización excepcional, reflejada en sus **127.6** puntos por **100** posesiones. Este dato, junto a la fluidez que exhibe el Unicaja de Ibon Navarro, con **25.5** asistencias por **100** posesiones, evidencia la primacía del baloncesto colectivo. Por otro lado, la meticulosidad del Hiopos Lleida, dirigido por Gerard Encuentra, minimiza errores con apenas **11.9** pérdidas por **100** posesiones, clave para el control del ritmo de partido y la gestión de posesiones críticas del equipo ilerdense.
+La Joventut, bajo la dirección de Dani Miret, evidenció un ritmo ofensivo superior, generando **136.1** puntos por cada cien posesiones, un dato que consolida la fluidez en su ataque estático y transiciones. Por otro lado, el Río Breogán de Luis Casimiro destacó por su notable circulación de balón, promediando **34.4** asistencias por cada cien posesiones, demostrando una excelente capacidad para mover la pelota y encontrar al jugador liberado. En el control del tempo, el UCAM Murcia de Sito Alonso minimizó errores con solo **8.4** pérdidas por cada cien posesiones, una métrica crucial para mantener la posesión y evitar contraataques rivales.
 
 ### Jugadores en Racha (Últimas 3 Jornadas)
-- Mario Hezonja (RMB): **34.3** VAL, **24.3** PTS, **4.0** AST.
-- Luka Bozic (COV): **31.3** VAL, **19.7** PTS, **4.0** AST.
-- David DeJulius (UCM): **31.0** VAL, **22.0** PTS, **7.3** AST.
-- Edy Tavares (RMB): **31.0** VAL, **18.0** PTS, **0.0** AST.
-- Gonzalo Corbalán (BUR): **23.5** VAL, **23.0** PTS, **2.5** AST.
+- Mario Hezonja (RMB): **37.0** VAL, **28.0** PTS, **4.5** AST.
+- Luka Bozic (COV): **33.3** VAL, **21.3** PTS, **3.0** AST.
+- David DeJulius (UCM): **28.7** VAL, **25.7** PTS, **5.3** AST.
+- Ricky Rubio (JOV): **28.0** VAL, **23.0** PTS, **7.0** AST.
+- Kendrick Perry (UNI): **24.5** VAL, **19.5** PTS, **4.5** AST.
